@@ -29,7 +29,6 @@ export default function EventFeed({ eventLog }) {
         minHeight:     0,
       }}
     >
-      {/* Panel header */}
       <div
         style={{
           padding:       'var(--space-2) var(--space-3)',
@@ -46,7 +45,6 @@ export default function EventFeed({ eventLog }) {
         Signal Log
       </div>
 
-      {/* Scrollable list */}
       <div
         ref={feedRef}
         className="no-scrollbar"
@@ -70,7 +68,6 @@ export default function EventFeed({ eventLog }) {
                 animation:    'entry-shimmer 0.3s ease-out',
               }}
             >
-              {/* Timestamp — Space Mono data tier */}
               <span
                 style={{
                   fontFamily:    'var(--font-data)',
@@ -84,10 +81,8 @@ export default function EventFeed({ eventLog }) {
                 {entry.timestamp}
               </span>
 
-              {/* Separator */}
               <span style={{ color: 'var(--border-active)', flexShrink: 0 }}>·</span>
 
-              {/* Sector ID — Barlow Condensed display tier */}
               <span
                 style={{
                   fontFamily:    'var(--font-display)',
@@ -101,10 +96,8 @@ export default function EventFeed({ eventLog }) {
                 [{entry.grid_id}]
               </span>
 
-              {/* Separator */}
               <span style={{ color: 'var(--border-active)', flexShrink: 0 }}>·</span>
 
-              {/* Delta — data tier */}
               <span
                 style={{
                   fontFamily: 'var(--font-data)',
@@ -117,7 +110,6 @@ export default function EventFeed({ eventLog }) {
                 Δ+{entry.signal_delta}
               </span>
 
-              {/* ε-protected label — UI tier */}
               <span
                 style={{
                   fontFamily:    'var(--font-ui)',

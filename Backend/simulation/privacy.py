@@ -3,10 +3,7 @@ import random
 
 
 def laplace_noise(value: float, sensitivity: float = 1.0, epsilon: float = 1.0) -> float:
-    """Add calibrated Laplace noise and clamp to [0, 100].
-
-    Uses the standard two-exponential decomposition for numerical stability.
-    """
+    """Add calibrated Laplace noise and clamp to [0, 100]."""
     scale = sensitivity / epsilon
     noise = random.expovariate(1 / scale) - random.expovariate(1 / scale)
     return max(0.0, min(100.0, value + noise))

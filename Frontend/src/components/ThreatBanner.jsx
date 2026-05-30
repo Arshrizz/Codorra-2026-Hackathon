@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const DISMISS_SECONDS = 8;
 
-// Circular SVG gauge showing anomaly score 0–100
 function AnomalyGauge({ score }) {
   const R   = 18;
   const C   = 2 * Math.PI * R;
@@ -11,14 +10,12 @@ function AnomalyGauge({ score }) {
 
   return (
     <svg width="52" height="52" viewBox="0 0 52 52" style={{ flexShrink: 0 }}>
-      {/* Track */}
       <circle
         cx="26" cy="26" r={R}
         fill="none"
         stroke="rgba(255, 50, 50, 0.15)"
         strokeWidth="3"
       />
-      {/* Fill arc */}
       <circle
         cx="26" cy="26" r={R}
         fill="none"
@@ -29,7 +26,6 @@ function AnomalyGauge({ score }) {
         strokeLinecap="round"
         transform="rotate(-90 26 26)"
       />
-      {/* Score digit */}
       <text
         x="26" y="30"
         textAnchor="middle"
@@ -79,7 +75,6 @@ export default function ThreatBanner({ alert, onDismiss }) {
             overflow:     'hidden',
           }}
         >
-          {/* Main row */}
           <div
             style={{
               display:    'flex',
@@ -88,7 +83,6 @@ export default function ThreatBanner({ alert, onDismiss }) {
               padding:    'var(--space-2) var(--space-4)',
             }}
           >
-            {/* Warning icon */}
             <span
               style={{
                 fontFamily: 'var(--font-data)',
@@ -100,7 +94,6 @@ export default function ThreatBanner({ alert, onDismiss }) {
               ⚠
             </span>
 
-            {/* Text block */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
@@ -128,11 +121,9 @@ export default function ThreatBanner({ alert, onDismiss }) {
               </div>
             </div>
 
-            {/* Circular gauge */}
             <AnomalyGauge score={alert.score} />
           </div>
 
-          {/* Countdown bar — drains over DISMISS_SECONDS */}
           <div
             key={alert.id} // re-mount to restart animation on new alerts
             style={{

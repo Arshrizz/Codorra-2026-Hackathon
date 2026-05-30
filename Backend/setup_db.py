@@ -1,9 +1,3 @@
-"""Create the grid_threats table in Supabase.
-
-Uses the Supabase Management API to execute DDL via the project's database.
-Falls back to printing SQL for manual execution if the API is unavailable.
-"""
-
 import asyncio
 import os
 import sys
@@ -16,7 +10,6 @@ load_dotenv()
 SUPABASE_URL = (os.getenv("SUPABASE_URL") or "").strip()
 SUPABASE_KEY = (os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
 
-# Extract project ref from URL: https://<ref>.supabase.co
 PROJECT_REF = SUPABASE_URL.split("//")[-1].split(".")[0] if SUPABASE_URL else ""
 
 CREATE_TABLE_SQL = """\
@@ -55,7 +48,6 @@ async def _table_exists(client: httpx.AsyncClient) -> bool:
 
 
 async def _exec_sql_via_rpc(client: httpx.AsyncClient, sql: str) -> bool:
-    """Execute SQL via PostgREST RPC by calling a custom exec function, or via /pg endpoint."""
     endpoints = [
         (f"{SUPABASE_URL}/pg/query", {"query": sql}),
         (f"{SUPABASE_URL}/rest/v1/rpc/exec_sql", {"sql": sql}),
@@ -84,14 +76,12 @@ async def main() -> None:
 
         print("  Table not found. Attempting auto-creation ...")
 
-        # Try SQL endpoints
         if await _exec_sql_via_rpc(client, CREATE_TABLE_SQL):
             print("[OK] Table 'grid_threats' created")
             await _exec_sql_via_rpc(client, ENABLE_REALTIME_SQL)
             print("[OK] Realtime enabled for grid_threats")
             return
 
-        # Fallback
         print("")
         print("[FAIL] Auto-creation not available on this Supabase instance.")
         print("  Run the following SQL in your Supabase Dashboard > SQL Editor:")

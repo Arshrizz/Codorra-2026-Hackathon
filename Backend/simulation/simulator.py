@@ -40,7 +40,6 @@ MUMBAI_GRIDS = [
     {"grid_id": "MUM-025", "zone": "Versova",        "lat": 19.1315, "lon": 72.8120},
 ]
 
-# Hot zones escalate toward Critical over time -- makes the demo cinematic
 HOT_ZONES = {"MUM-005", "MUM-008", "MUM-016", "MUM-022"}
 
 SEVERITY_MAP = [(85, "critical"), (65, "high"), (40, "medium"), (0, "low")]

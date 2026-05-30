@@ -8,7 +8,7 @@ from app.schemas.telemetry import TelemetryReport
 
 logger = logging.getLogger(__name__)
 
-ALPHA = 0.3  # EMA smoothing — higher = more reactive to recent reports
+ALPHA = 0.3
 FLUSH_INTERVAL_S = 2.5
 
 THRESHOLDS = [(85, "Critical"), (65, "High"), (40, "Moderate"), (0, "Low")]
@@ -93,7 +93,6 @@ async def _upsert_grids(grid_ids: list[str]) -> None:
 
 
 async def _periodic_flush() -> None:
-    """Flush all dirty grids to Supabase every FLUSH_INTERVAL_S seconds."""
     while True:
         await asyncio.sleep(FLUSH_INTERVAL_S)
         dirty_ids = [gid for gid, g in _grids.items() if g.dirty]

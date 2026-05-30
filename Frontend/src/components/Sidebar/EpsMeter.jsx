@@ -1,11 +1,8 @@
-import { useEffect, useRef } from 'react';
 
-// ── ε-Budget VU Meter ─────────────────────────────────────────────────────────
-// Vertical track, gradient fill green→cyan→amber→red (top to bottom = full to depleted)
-// Ticks at 75%, 50%, 25%. Digit readout blinks red when ε < 0.20.
 
-const TRACK_H  = 180; // px — height of the fill track
-const TRACK_W  = 14;  // px — width of the track
+
+const TRACK_H  = 180;
+const TRACK_W  = 14;
 
 export default function EpsMeter({ epsilon = 1.0 }) {
   const critical = epsilon < 0.20;
@@ -22,7 +19,6 @@ export default function EpsMeter({ epsilon = 1.0 }) {
         userSelect:     'none',
       }}
     >
-      {/* Digit readout */}
       <div
         style={{
           fontFamily:    'var(--font-data)',
@@ -39,7 +35,6 @@ export default function EpsMeter({ epsilon = 1.0 }) {
         {epsilon.toFixed(2)}
       </div>
 
-      {/* Track + fill */}
       <div
         style={{
           position:     'relative',
@@ -51,7 +46,6 @@ export default function EpsMeter({ epsilon = 1.0 }) {
           overflow:     'hidden',
         }}
       >
-        {/* Gradient fill — rises from bottom */}
         <div
           style={{
             position:   'absolute',
@@ -65,7 +59,6 @@ export default function EpsMeter({ epsilon = 1.0 }) {
           }}
         />
 
-        {/* Tick marks at 75% / 50% / 25% */}
         {[75, 50, 25].map((pct) => (
           <div
             key={pct}
@@ -82,7 +75,6 @@ export default function EpsMeter({ epsilon = 1.0 }) {
         ))}
       </div>
 
-      {/* ε-BDG label — rotated 90°, muted */}
       <div
         style={{
           fontFamily:    'var(--font-data)',

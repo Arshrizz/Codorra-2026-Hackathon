@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, memo } from 'react';
 
 const INSET = 0.5;
 
-// ── 6-band heat ramp — encodes signal count as color + opacity ───────────────
 function getHeatFill(count) {
   if (count === 0)  return { color: 'var(--bg-cell)', opacity: 1 };
   if (count <= 5)   return { color: 'color-mix(in srgb, var(--cyan) 20%, var(--bg-cell))', opacity: 0.4 + count * 0.1 };
@@ -22,7 +21,7 @@ const GridCell = memo(function GridCell({
   noiseDelta,
   hasChanged,
   isThreatCrossing,
-  cellPhase = 0, // 0–2π offset for breathing sine
+  cellPhase = 0,
 }) {
   const [showTooltip,   setShowTooltip]   = useState(false);
   const [showRipple,    setShowRipple]    = useState(false);
@@ -36,14 +35,12 @@ const GridCell = memo(function GridCell({
   const cx = x + width  / 2;
   const cy = y + height / 2;
 
-  // Cell entry on mount
   useEffect(() => {
     setEnterActive(true);
     const t = setTimeout(() => setEnterActive(false), 220);
     return () => clearTimeout(t);
   }, []);
 
-  // Bump on delta receive
   useEffect(() => {
     if (hasChanged && signalCount !== prevCount.current) {
       setBumpActive(true);
@@ -53,7 +50,6 @@ const GridCell = memo(function GridCell({
     prevCount.current = signalCount;
   }, [hasChanged, signalCount]);
 
-  // Threat crossing ripple
   useEffect(() => {
     if (isThreatCrossing) {
       setShowRipple(true);
@@ -63,7 +59,6 @@ const GridCell = memo(function GridCell({
     return () => clearTimeout(rippleTimer.current);
   }, [isThreatCrossing]);
 
-  // Breathing: opacity oscillates between 82%–100% at 2.8s period with phase offset
   const breatheDelay = `-${(cellPhase * 2.8).toFixed(2)}s`;
 
   const isThreat    = signalCount >= 50;
@@ -80,7 +75,6 @@ const GridCell = memo(function GridCell({
       onMouseLeave={() => setShowTooltip(false)}
     >
       <title>Sector {gridId} - Signals: {signalCount}, Threat: {isThreat ? 'high' : isElevated ? 'elevated' : 'safe'}</title>
-      {/* ── Cell body ─────────────────────────────────────────── */}
       <rect
         x={x + INSET}
         y={y + INSET}
@@ -103,7 +97,6 @@ const GridCell = memo(function GridCell({
         }}
       />
 
-      {/* ── Threat ring — expanding concentric ring ─────────── */}
       {(isThreat) && (
         <circle
           cx={cx}
@@ -120,7 +113,6 @@ const GridCell = memo(function GridCell({
         />
       )}
 
-      {/* ── One-shot ripple on threat crossing ──────────────── */}
       {showRipple && (
         <circle
           cx={cx}
@@ -137,7 +129,6 @@ const GridCell = memo(function GridCell({
         />
       )}
 
-      {/* ── Hover tooltip ─────────────────────────────────── */}
       {showTooltip && (
         <foreignObject
           x={cx - 80}

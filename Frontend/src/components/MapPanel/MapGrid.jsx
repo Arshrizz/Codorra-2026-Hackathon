@@ -4,7 +4,6 @@ import NoiseOverlay from './NoiseOverlay';
 
 const GRID_SIZE = 16;
 
-// Button style for the control strip
 function CtrlBtn({ label, color = 'var(--text-muted)', onClick, title }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -37,7 +36,6 @@ export default function MapGrid({ gridData, epsilon = 1.0, isPaused, onInject, o
   const [dims, setDims]         = useState({ width: 600, height: 600 });
   const prevDataRef             = useRef(new Map());
 
-  // Diff: which cells changed this render cycle
   const changedCells    = new Set();
   const threatCrossings = new Set();
 
@@ -55,12 +53,10 @@ export default function MapGrid({ gridData, epsilon = 1.0, isPaused, onInject, o
 
   useEffect(() => { prevDataRef.current = new Map(gridData); });
 
-  // Responsive container measurement
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect;
-      // Reserve 32px at bottom for control strip
       setDims({ width, height: height - 32 });
     });
     ro.observe(containerRef.current);
@@ -83,7 +79,6 @@ export default function MapGrid({ gridData, epsilon = 1.0, isPaused, onInject, o
         flexDirection:   'column',
       }}
     >
-      {/* ── Grid SVG ─────────────────────────────────────────── */}
       <div style={{ position: 'relative', width: '100%', height: `${dims.height}px`, flexShrink: 0 }}>
         <svg
           width={dims.width}
@@ -94,7 +89,6 @@ export default function MapGrid({ gridData, epsilon = 1.0, isPaused, onInject, o
             const parts  = row.grid_id.split('-');
             const rowIdx = parseInt(parts[0], 10);
             const colIdx = parseInt(parts[1], 10);
-            // Phase offset spreads breathing across the grid (0–1 normalized then *2π)
             const phase  = ((rowIdx * GRID_SIZE + colIdx) / (GRID_SIZE * GRID_SIZE));
 
             return (
@@ -115,7 +109,6 @@ export default function MapGrid({ gridData, epsilon = 1.0, isPaused, onInject, o
           })}
         </svg>
 
-        {/* ── Diagonal shimmer sweep ────────────────────────── */}
         <div
           style={{
             position:      'absolute',
@@ -130,11 +123,9 @@ export default function MapGrid({ gridData, epsilon = 1.0, isPaused, onInject, o
           }}
         />
 
-        {/* ── Noise particle overlay ────────────────────────── */}
         <NoiseOverlay width={dims.width} height={dims.height} epsilon={epsilon} />
       </div>
 
-      {/* ── Control strip ────────────────────────────────────── */}
       <div
         style={{
           height:         'var(--space-8)',

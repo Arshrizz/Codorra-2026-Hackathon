@@ -1,10 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
-
-// ── Particle physics tied to ε value ─────────────────────────────────────────
-// ε 0.8–1.0: 40 particles, slow (3–5s), cyan
-// ε 0.5–0.8: 100 particles, moderate (2–4s), cyan
-// ε 0.2–0.5: 160 particles, faster (1–2.5s), amber
-// ε 0.0–0.2: 200 particles, fast (0.5–1.5s), red
+import { useEffect, useRef } from 'react';
 
 function getParticleConfig(epsilon) {
   if (epsilon >= 0.8) return { count: 40,  speedMin: 3,   speedMax: 5,   color: 'oklch(55% 0.15 250)' };
@@ -35,7 +29,6 @@ export default function NoiseOverlay({ width = 1000, height = 720, epsilon = 1.0
   const canvasRef = useRef(null);
   const stateRef  = useRef({ particles: [], animId: null, epsilon: 1.0 });
 
-  // Update epsilon in ref so the render loop can read it without re-mounting
   useEffect(() => {
     stateRef.current.epsilon = epsilon;
   }, [epsilon]);
@@ -46,7 +39,6 @@ export default function NoiseOverlay({ width = 1000, height = 720, epsilon = 1.0
     const ctx = canvas.getContext('2d');
     let time = 0;
 
-    // Build initial particle pool at max size — we'll only draw the active subset
     const MAX_PARTICLES = 200;
     const allParticles = Array.from({ length: MAX_PARTICLES }, (_, i) =>
       createParticle(i, width, height, 0.5, 5)
@@ -61,17 +53,14 @@ export default function NoiseOverlay({ width = 1000, height = 720, epsilon = 1.0
       const active = allParticles.slice(0, cfg.count);
 
       for (const p of active) {
-        // Continuous drift
-        p.x += p.vx * 0.016; // ~60fps delta
+        p.x += p.vx * 0.016;
         p.y += p.vy * 0.016;
 
-        // Wrap at edges
         if (p.x < 0)      p.x = width;
         if (p.x > width)  p.x = 0;
         if (p.y < 0)      p.y = height;
         if (p.y > height) p.y = 0;
 
-        // Fade in/out over lifetime using sine
         const phase = ((time + p.delay) % p.life) / p.life;
         const fade  = Math.sin(phase * Math.PI);
 

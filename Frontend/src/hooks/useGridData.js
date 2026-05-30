@@ -1,16 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// ── Constants ────────────────────────────────────────────────────────────────
-let _eventSeq = 0; // monotonic counter — guarantees unique event IDs
+let _eventSeq = 0;
 const nextId = (prefix) => `${prefix}-${++_eventSeq}`;
 
-const EPSILON_START   = 1.0;
-const EPSILON_DECAY   = 0.008;   // per 2000ms tick → full drain ≈ 4 min
-const EPSILON_FLOOR   = 0.05;
+const EPSILON_START       = 1.0;
+const EPSILON_DECAY       = 0.008;
+const EPSILON_FLOOR       = 0.05;
 const EPSILON_INJECT_COST = 0.05;
-const THREAT_THRESHOLD    = 50;  // signal_count ≥ this → threat level
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
+const THREAT_THRESHOLD    = 50;
 
 function getThreatLevel(signalCount) {
   if (signalCount >= THREAT_THRESHOLD) return 'threat';
@@ -18,14 +15,11 @@ function getThreatLevel(signalCount) {
   return 'safe';
 }
 
-// Laplace noise sampler — b = 1/epsilon
 function laplace(b) {
   const u = Math.random() - 0.5;
   return -b * Math.sign(u) * Math.log(1 - 2 * Math.abs(u));
 }
 
-// Generates a full 16×16 grid of mock cells — realistic distribution:
-// ~65% safe (0–19), ~25% elevated (20–49), ~10% threat (50+)
 function buildMockGrid() {
   const data = new Map();
   for (let row = 0; row < 16; row++) {
@@ -34,10 +28,10 @@ function buildMockGrid() {
       const roll = Math.random();
       const signalCount =
         roll < 0.65
-          ? Math.floor(Math.random() * 20)          // safe: 0–19
+          ? Math.floor(Math.random() * 20)
           : roll < 0.90
-          ? 20 + Math.floor(Math.random() * 30)     // elevated: 20–49
-          : 50 + Math.floor(Math.random() * 50);    // threat: 50–99
+          ? 20 + Math.floor(Math.random() * 30)
+          : 50 + Math.floor(Math.random() * 50);
 
       data.set(gridId, {
         grid_id:      gridId,
@@ -68,7 +62,6 @@ function buildMockEventLog(gridData) {
   return entries.slice(0, 50).sort(() => Math.random() - 0.5);
 }
 
-// ── Hook ─────────────────────────────────────────────────────────────────────
 export function useGridData() {
   const [gridData, setGridData] = useState(() => buildMockGrid());
   const [eventLog, setEventLog] = useState([]);
@@ -88,7 +81,6 @@ export function useGridData() {
   const hasSupabase =
     import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  // ── Stats ─────────────────────────────────────────────────────────────────
   const recomputeStats = useCallback((gd) => {
     let total = 0;
     let active = 0;
@@ -105,7 +97,6 @@ export function useGridData() {
     });
   }, []);
 
-  // ── Event log append ──────────────────────────────────────────────────────
   const appendEvent = useCallback((row) => {
     const ts = new Date().toTimeString().slice(0, 8);
     setEventLog((prev) => {
@@ -120,7 +111,6 @@ export function useGridData() {
     });
   }, []);
 
-  // ── Mock simulation ───────────────────────────────────────────────────────
   const startMockSimulation = useCallback(() => {
     const initial = buildMockGrid();
     setGridData(initial);
@@ -130,21 +120,18 @@ export function useGridData() {
     intervalRef.current = setInterval(() => {
       if (isPausedRef.current) return;
 
-      // Decay epsilon each tick
       setEpsilon((prev) => Math.max(EPSILON_FLOOR, prev - EPSILON_DECAY));
 
       setGridData((prev) => {
         const next = new Map(prev);
         const keys = Array.from(next.keys());
 
-        // Mutate 3–8 random cells per tick with Laplace-noised deltas
         const count = Math.floor(Math.random() * 6) + 3;
         for (let i = 0; i < count; i++) {
           const key = keys[Math.floor(Math.random() * keys.length)];
           const old = next.get(key);
           if (!old) continue;
 
-          // New raw signal + Laplace noise + decay factor
           const raw     = Math.random() * 14;
           const noisy   = Math.max(0, old.signal_count * 0.94 + raw + laplace(2.5));
           const newCount = Math.round(Math.max(0, Math.min(noisy, 120)));
@@ -168,7 +155,6 @@ export function useGridData() {
     }, 2000);
   }, [appendEvent, recomputeStats]);
 
-  // ── Supabase subscription ─────────────────────────────────────────────────
   const startSupabaseSubscription = useCallback(async () => {
     const { supabase } = await import('../lib/supabase');
 
@@ -179,7 +165,6 @@ export function useGridData() {
     if (rows) {
       const gd = new Map();
       for (const row of rows) {
-        // Map backend threat_score to frontend signal_count
         const score = Math.round(row.threat_score ?? 0);
         const level = getThreatLevel(score);
         gd.set(row.grid_id, { ...row, signal_count: score, threat_level: level });
@@ -211,7 +196,6 @@ export function useGridData() {
       .subscribe();
   }, [appendEvent, recomputeStats]);
 
-  // ── Bootstrap ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (hasSupabase) {
       startSupabaseSubscription();
@@ -224,20 +208,15 @@ export function useGridData() {
     };
   }, [hasSupabase, startMockSimulation, startSupabaseSubscription]);
 
-  // Keep ref in sync so interval closure can read it without stale value
   useEffect(() => {
     isPausedRef.current = isPaused;
   }, [isPaused]);
 
-  // ── Actions ───────────────────────────────────────────────────────────────
-
-  /** Fire a synthetic 3×3 anomaly cluster (+40–70 signals per cell). */
   const injectAnomaly = useCallback(() => {
     setGridData((prev) => {
       const next    = new Map(prev);
       const keys    = Array.from(next.keys());
       const centerKey = keys[2 + Math.floor(Math.random() * 12) * 16 + 2 + Math.floor(Math.random() * 12)];
-      // Fallback if key lookup is off
       const fallback  = keys[Math.floor(Math.random() * keys.length)];
       const chosen    = centerKey ?? fallback;
       const [cr, cc]  = chosen.split('-').map(Number);
@@ -266,11 +245,9 @@ export function useGridData() {
       recomputeStats(next);
       return next;
     });
-    // Each injection costs epsilon budget
     setEpsilon((prev) => Math.max(EPSILON_FLOOR, prev - EPSILON_INJECT_COST));
   }, [appendEvent, recomputeStats]);
 
-  /** Zero all cells and restore epsilon to 1.0. */
   const resetGrid = useCallback(() => {
     const fresh = buildMockGrid();
     setGridData(fresh);
@@ -279,7 +256,6 @@ export function useGridData() {
     recomputeStats(fresh);
   }, [recomputeStats]);
 
-  /** Toggle live/pause. */
   const togglePause = useCallback(() => {
     setIsPaused((p) => !p);
   }, []);

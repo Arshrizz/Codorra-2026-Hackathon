@@ -40,7 +40,6 @@ export default function StatusBar({ stats }) {
             whiteSpace: 'nowrap',
           }}
         >
-          {/* Pipe separator (not before first item) */}
           {i > 0 && (
             <span
               style={{
@@ -53,12 +52,10 @@ export default function StatusBar({ stats }) {
             </span>
           )}
 
-          {/* Label */}
           <span style={{ color: 'var(--text-muted)' }}>
             {field.label}:
           </span>
 
-          {/* Value */}
           <span
             style={{
               color: 'var(--text-secondary)',

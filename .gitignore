@@ -1,175 +1,46 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-#  Usually these files are written by a python script, but may contain encryption keys or other secrets
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-#   For a library or app, you might want to share your .python-version.
-#   Reference: https://github.com/pyenv/pyenv/blob/master/COMMANDS.md#pyenv-version
-#.python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if used with a pyproject.toml, the lock file may be irrelevant.
-#Pipfile.lock
-
-# poetry
-#   Similar to Pipfile.lock, poetry.lock is generally recommended to be committed.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
-
-# pdm
-#   Similar to Pipfile.lock, pdm.lock is generally recommended to be committed.
-#pdm.lock
-
-# virtualenv
+.eggs/
+dist/
+build/
 .venv
 venv/
-ENV/
 env/
-active_env/
-active_env.bat
-active_env.ps1
 
-# spyder project settings
-.spyderproject
-.spyder-py3
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# OS-specific files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Veil specific environment / secrets
+# Environment / secrets
 .env
-Backend/.env
-Frontend/.env
-*/*.env
-**/.*env*
+**/.env
 *.local
-**/logs/
-**/.system_generated/
 
-# Node / Vite build artifacts
+# Node / Vite
 Frontend/node_modules/
 Frontend/dist/
+Frontend/dist-ssr/
 
-# Agent tooling — not part of the project source
-.agent/
-.agents/
+# Logs
+*.log
+logs/
 
-# Project meta / prompt files — internal use only
-Antigravity_Prompt.md
-skills-lock.json
-Patch3_ExactCode.md
-UI_Upgrade_Spec.md
+# OS
+.DS_Store
+Thumbs.db
 
-# Spec / internal docs
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Test / type checker caches
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Internal spec / prompt docs (not project source)
+Backend/Backend.md
 Frontend/Frontend.md
-/README.md
-
-# Frontend lockfile placeholder
-Frontend/.gitkeep
-*.md
+Antigravity_Prompt.md
+UI_Upgrade_Spec.md
+Patch3_ExactCode.md

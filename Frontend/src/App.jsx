@@ -13,7 +13,6 @@ import ThresholdConfig    from './components/Sidebar/ThresholdConfig';
 import ThreatBanner       from './components/ThreatBanner';
 import StatusBar          from './components/StatusBar';
 
-// Page-load stagger
 const fadeIn = (delay) => ({
   initial:    { opacity: 0 },
   animate:    { opacity: 1 },
@@ -34,14 +33,12 @@ export default function App() {
     togglePause,
   } = useGridData();
 
-  // ── Threat alert detection ───────────────────────────────────────────────
   const [currentAlert, setCurrentAlert] = useState(null);
   const prevGridRef = useRef(new Map());
 
   useEffect(() => {
     for (const [id, row] of gridData) {
       const prev = prevGridRef.current.get(id);
-      // New threat crossing: prev below threshold, now above
       if (
         prev &&
         prev.signal_count < THREAT_THRESHOLD &&
@@ -55,7 +52,7 @@ export default function App() {
           score:            parseFloat(score.toFixed(1)),
           epsilonRemaining: epsilon,
         });
-        break; // show one at a time
+        break;
       }
     }
     prevGridRef.current = new Map(gridData);
@@ -65,14 +62,11 @@ export default function App() {
 
   return (
     <div className="bg-crosshatch app-container">
-      {/* ── Topbar ─────────────────────────────────────────── */}
       <motion.div {...fadeIn(0)}>
         <Topbar />
       </motion.div>
 
-      {/* ── Main content row ───────────────────────────────── */}
       <div className="main-content-row">
-        {/* ── Left ε-Budget strip ────────────────────────── */}
         <motion.div
           {...fadeIn(0.06)}
           style={{
@@ -88,7 +82,6 @@ export default function App() {
           <EpsMeter epsilon={epsilon} />
         </motion.div>
 
-        {/* ── Map Panel ──────────────────────────────────── */}
         <motion.div
           {...fadeIn(0.10)}
           style={{
@@ -98,10 +91,9 @@ export default function App() {
             borderRight:   '1px solid var(--border-dim)',
             overflow:      'hidden',
             position:      'relative',
-            minHeight:     '400px', // Map needs min height on mobile
+            minHeight:     '400px',
           }}
         >
-          {/* Map panel header */}
           <div
             style={{
               padding:       'var(--space-2) var(--space-3)',
@@ -118,9 +110,7 @@ export default function App() {
             City Grid — Threat Heatmap · 16×16
           </div>
 
-          {/* Grid (fills remaining space) */}
           <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-            {/* Threat banner — absolute inside map panel */}
             <ThreatBanner alert={currentAlert} onDismiss={dismissAlert} />
 
             <MapGrid
@@ -134,17 +124,14 @@ export default function App() {
           </div>
         </motion.div>
 
-        {/* ── Right Sidebar ──────────────────────────────── */}
         <motion.div
           {...fadeIn(0.16)}
           className="sidebar-panel"
         >
-          {/* Metric cards */}
           <div style={{ flexShrink: 0 }}>
             <MetricCards stats={stats} epsilon={epsilon} />
           </div>
 
-          {/* Alert config */}
           <div
             style={{
               borderTop:     '1px solid var(--border-dim)',
@@ -162,10 +149,8 @@ export default function App() {
           </div>
           <ThresholdConfig defaultValue={THREAT_THRESHOLD} />
 
-          {/* Signal timeline */}
           <SignalTimeline eventLog={eventLog} />
 
-          {/* Event log — takes remaining space */}
           <div
             style={{
               flex:          1,
@@ -180,7 +165,6 @@ export default function App() {
         </motion.div>
       </div>
 
-      {/* ── Status bar ─────────────────────────────────────── */}
       <motion.div {...fadeIn(0.22)}>
         <StatusBar stats={stats} />
       </motion.div>

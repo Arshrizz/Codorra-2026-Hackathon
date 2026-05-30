@@ -11,7 +11,6 @@ const LEVEL_COLOR = {
   safe:     'var(--cyan)',
 };
 
-// Tooltip follows mouse within the chart
 function Tooltip({ text, x, y }) {
   return (
     <div
@@ -37,13 +36,11 @@ function Tooltip({ text, x, y }) {
 }
 
 export default function SignalTimeline({ eventLog }) {
-  const [tooltip, setTooltip] = useState(null); // { text, x, y }
+  const [tooltip, setTooltip] = useState(null);
   const wrapRef = useRef(null);
 
-  // Keep only the most recent MAX_BARS events
   const recent = eventLog.slice(0, MAX_BARS).reverse();
 
-  // Auto-scroll to the right when new bars arrive
   useEffect(() => {
     if (wrapRef.current) {
       wrapRef.current.scrollLeft = wrapRef.current.scrollWidth;
@@ -88,7 +85,6 @@ export default function SignalTimeline({ eventLog }) {
         }}
         onMouseLeave={() => setTooltip(null)}
       >
-        {/* Threat threshold annotation line */}
         {recent.some((e) => e.threat_level === 'threat') && (
           <div
             style={{

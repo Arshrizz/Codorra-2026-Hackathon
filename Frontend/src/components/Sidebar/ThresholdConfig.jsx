@@ -36,7 +36,6 @@ export default function ThresholdConfig({ defaultValue = 50 }) {
         flexShrink: 0,
       }}
     >
-      {/* Label */}
       <div
         style={{
           fontFamily: 'var(--font-display)',

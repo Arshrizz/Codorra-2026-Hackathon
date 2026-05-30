@@ -21,7 +21,6 @@ export function useNoiseParticles(width = 600, height = 600) {
   const intervalRef = useRef(null);
 
   useEffect(() => {
-    // Re-initialize when dimensions change
     setParticles(initParticles(width, height));
   }, [width, height]);
 
@@ -29,7 +28,6 @@ export function useNoiseParticles(width = 600, height = 600) {
     intervalRef.current = setInterval(() => {
       setParticles((prev) => {
         const next = [...prev];
-        // Pick 30–50 random indices
         const count = Math.floor(Math.random() * 21) + 30;
         const indices = new Set();
         while (indices.size < count) {

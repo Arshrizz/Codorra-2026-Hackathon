@@ -4,7 +4,6 @@ const SPARK_W  = 52;
 const SPARK_H  = 20;
 const HISTORY  = 30;
 
-// Canvas sparkline for a card
 function Sparkline({ history, color }) {
   const canvasRef = useRef(null);
 
@@ -41,7 +40,6 @@ function Sparkline({ history, color }) {
   );
 }
 
-// Single metric card
 function MetricCard({ label, value, color, history, unit = '' }) {
   return (
     <div
@@ -55,7 +53,6 @@ function MetricCard({ label, value, color, history, unit = '' }) {
         gap:          'var(--space-1)',
       }}
     >
-      {/* Large value */}
       <div
         style={{
           fontFamily:    'var(--font-data)',
@@ -73,7 +70,6 @@ function MetricCard({ label, value, color, history, unit = '' }) {
           </span>
         )}
       </div>
-      {/* Label */}
       <div
         style={{
           fontFamily:    'var(--font-ui)',
@@ -86,7 +82,6 @@ function MetricCard({ label, value, color, history, unit = '' }) {
       >
         {label}
       </div>
-      {/* Sparkline */}
       {history.length >= 2 && (
         <Sparkline history={history} color={color} />
       )}
@@ -94,7 +89,6 @@ function MetricCard({ label, value, color, history, unit = '' }) {
   );
 }
 
-// Privacy info row
 function PrivacyRow({ label, value, valueColor }) {
   return (
     <div
@@ -137,7 +131,6 @@ export default function MetricCards({ stats, epsilon }) {
     privacyBudget    = 100,
   } = stats ?? {};
 
-  // Rolling 30-tick history buffers
   const histRef = useRef({
     signals:  Array(HISTORY).fill(0),
     active:   Array(HISTORY).fill(0),
@@ -152,7 +145,7 @@ export default function MetricCards({ stats, epsilon }) {
     h.active  = [...h.active.slice(1),  activeGrids];
     h.epsilon = [...h.epsilon.slice(1), epsilon];
     h.privacy = [...h.privacy.slice(1), privacyBudget];
-    setTick((t) => t + 1); // force re-render
+    setTick((t) => t + 1);
   }, [signalsProcessed, activeGrids, epsilon, privacyBudget]);
 
   const epsilonColor  = epsilon < 0.2 ? 'var(--red-threat)'
@@ -172,7 +165,6 @@ export default function MetricCards({ stats, epsilon }) {
 
   return (
     <div style={{ padding: 'var(--space-3) var(--space-3) 0' }}>
-      {/* 2×2 metric card grid */}
       <div
         style={{
           display:             'grid',
@@ -208,7 +200,6 @@ export default function MetricCards({ stats, epsilon }) {
         />
       </div>
 
-      {/* Privacy mechanism info */}
       <div
         style={{
           background:   'var(--bg-surface)',

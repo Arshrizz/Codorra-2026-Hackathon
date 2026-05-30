@@ -28,7 +28,6 @@ export default function Topbar() {
         backdropFilter: 'blur(8px)',
       }}
     >
-      {/* ── Left: VEIL logotype ───────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div
           style={{
@@ -58,7 +57,6 @@ export default function Topbar() {
         </div>
       </div>
 
-      {/* ── Center: LIVE pill ─────────────────────────────────── */}
       <div
         style={{
           display: 'flex',
@@ -95,7 +93,6 @@ export default function Topbar() {
         </span>
       </div>
 
-      {/* ── Right: nodes + clock ──────────────────────────────── */}
       <div
         style={{
           display: 'flex',
@@ -103,7 +100,6 @@ export default function Topbar() {
           gap: 'var(--space-6)',
         }}
       >
-        {/* Node count */}
         <div
           style={{
             fontFamily: 'var(--font-data)',
@@ -118,10 +114,8 @@ export default function Topbar() {
           {' '}NODES
         </div>
 
-        {/* Divider */}
         <div style={{ width: '1px', height: '20px', background: 'var(--border-dim)' }} />
 
-        {/* Live clock */}
         <div
           style={{
             fontFamily: 'var(--font-data)',
@@ -136,7 +130,6 @@ export default function Topbar() {
           {clock}
         </div>
 
-        {/* ε readout with tooltip */}
         <div
           style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
           onMouseEnter={() => setEpsilonTip(true)}

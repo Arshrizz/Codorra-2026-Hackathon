@@ -1,55 +1,40 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
-/* ============================================================
-   VEIL — Design Token Foundation v2.0
-   Light Mode Premium UI
-   All colors come exclusively from CSS custom properties.
-   Zero hardcoded hex values may appear in JSX component files.
-   ============================================================ */
 
 :root {
-  /* ── Backgrounds (OKLCH tinted white/cool-gray) ──────────── */
   --bg-void:      oklch(99% 0.005 250);
   --bg-surface:   oklch(97% 0.008 250);
   --bg-grid:      oklch(96% 0.01 250);
   --bg-cell:      oklch(95% 0.012 250);
   --bg-elevated:  oklch(100% 0 0);
 
-  /* ── Borders ─────────────────────────────────────────────── */
   --border-dim:    oklch(88% 0.015 250);
   --border-active: oklch(78% 0.02 250);
 
-  /* ── Text ───────────────────────────────────────────────── */
   --text-primary:  oklch(20% 0.02 250);
   --text-secondary:oklch(40% 0.02 250);
   --text-muted:    oklch(60% 0.01 250);
   --text-dim:      oklch(75% 0.01 250);
 
-  /* ── Primary accent (Cobalt Blue) ───────────────────────── */
   --cyan:          oklch(55% 0.15 250);
   --cyan-dim:      oklch(92% 0.04 250);
 
-  /* ── Threat encoding ────────────────────────────────────── */
   --green-safe:    oklch(60% 0.15 155);
   --amber-warn:    oklch(65% 0.16 55);
   --red-threat:    oklch(55% 0.22 25);
 
-  /* ── Legacy aliases (keeps existing components functional) ─ */
   --accent-safe:   var(--green-safe);
   --accent-warn:   var(--amber-warn);
   --accent-threat: var(--red-threat);
   --accent-noise:  var(--cyan);
 
-  /* ── Typography ─────────────────────────────────────────── */
   --font-display: 'Plus Jakarta Sans', sans-serif;
   --font-data:    'JetBrains Mono', monospace;
   --font-ui:      'Plus Jakarta Sans', sans-serif;
   --font-body:    'JetBrains Mono', monospace;
 
-  /* ── Grid crosshatch line ───────────────────────────────── */
   --grid-line:     oklch(90% 0.01 250 / 0.5);
 
-  /* ── Impeccable 4pt Spacing Scale ───────────────────────── */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -59,15 +44,11 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* ── Impeccable Easing Curves ───────────────────────────── */
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ============================================================
-   Reset & Base
-   ============================================================ */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -90,10 +71,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ============================================================
-   Crosshatch Grid Background
-   Applied to root app container via .bg-crosshatch
-   ============================================================ */
 
 .bg-crosshatch {
   background-color: var(--bg-void);
@@ -114,36 +91,29 @@ body {
     );
 }
 
-/* ============================================================
-   Keyframes — Every animation encodes meaning.
-   ============================================================ */
 
-/* Cell entry — signal first received by this zone */
+
 @keyframes cell-enter {
   from { opacity: 0; transform: scale(0.85); }
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* Cell breathing — system is alive, data is live */
 @keyframes cell-breathe {
   0%, 100% { opacity: 0.82; }
   50%       { opacity: 1.0;  }
 }
 
-/* Signal delta bump — new data received */
 @keyframes cell-bump {
   0%   { transform: scale(1);    }
   35%  { transform: scale(1.08); }
   100% { transform: scale(1);    }
 }
 
-/* Threat ring — active danger persisting */
 @keyframes threat-ring {
   0%   { transform: translate(-50%, -50%) scale(0.7); opacity: 1; }
   100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
 }
 
-/* Grid shimmer — ambient premium diagonal sweep */
 @keyframes grid-shimmer {
   0%   { transform: translateX(-150%) skewX(-15deg); opacity: 0;    }
   8%   { opacity: 0.045; }
@@ -151,45 +121,36 @@ body {
   100% { transform: translateX(300%)  skewX(-15deg); opacity: 0;    }
 }
 
-/* Threat alert banner slide-in */
 @keyframes slide-down {
   from { transform: translateY(-100%); opacity: 0; }
   to   { transform: translateY(0);     opacity: 1; }
 }
 
-/* Countdown bar drain over N seconds */
 @keyframes drain {
   from { width: 100%; }
   to   { width: 0%;   }
 }
 
-/* ε critical — digit blinks red */
 @keyframes blink {
   0%, 100% { opacity: 1;    }
   50%       { opacity: 0.15; }
 }
 
-/* LIVE status indicator */
 @keyframes pulse-dot {
   0%, 100% { opacity: 1;    }
   50%       { opacity: 0.2;  }
 }
 
-/* New log entry shimmer */
 @keyframes entry-shimmer {
   from { opacity: 0.5; }
   to   { opacity: 1;   }
 }
 
-/* Ripple ring emanating from cell center (legacy — used in GridCell) */
 @keyframes ripple {
   0%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
   100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
 }
 
-/* ============================================================
-   Utility Classes
-   ============================================================ */
 
 .font-display {
   font-family: var(--font-display);
@@ -208,7 +169,6 @@ body {
   font-weight: 300;
 }
 
-/* Scrollbar suppression */
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -216,10 +176,6 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
-
-/* ============================================================
-   Reduced Motion
-   ============================================================ */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
