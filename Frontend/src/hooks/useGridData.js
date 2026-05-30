@@ -180,6 +180,7 @@ export function useGridData() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'grid_threats' },
         (payload) => {
+          if (isPausedRef.current) return;   // honour pause in production
           const row   = payload.new;
           const score = Math.round(row.threat_score ?? 0);
           const level = getThreatLevel(score);
