@@ -1,23 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
-// Color map by threat_level — opacity applied via fill-opacity on the SVG rect
+// Color map by threat_level
 const THREAT_COLOR = {
   safe:     'var(--accent-safe)',
   elevated: 'var(--accent-warn)',
   threat:   'var(--accent-threat)',
 };
 
+// Opacity values per spec — sparse map with hot-spots effect
 const THREAT_OPACITY = {
   safe:     0.20,
   elevated: 0.50,
   threat:   0.80,
 };
 
+const INSET = 0.5; // half-pixel inset for crisp border rendering
+
 export default function GridCell({
   x,
   y,
-  size,
+  width,
+  height,
   gridId,
   threatLevel,
   signalCount,
@@ -43,22 +47,22 @@ export default function GridCell({
     return () => clearTimeout(rippleTimerRef.current);
   }, [isThreatCrossing]);
 
-  const cx = x + size / 2;
-  const cy = y + size / 2;
+  const cx = x + width  / 2;
+  const cy = y + height / 2;
+  const rippleR = Math.min(width, height) * 0.45;
 
   return (
     <g>
       {/* Cell body */}
       <motion.rect
-        x={x + 0.5}
-        y={y + 0.5}
-        width={size - 1}
-        height={size - 1}
+        x={x + INSET}
+        y={y + INSET}
+        width={width  - INSET * 2}
+        height={height - INSET * 2}
         fill={color}
-        fillOpacity={opacity}
         stroke="var(--border-dim)"
         strokeWidth={0.5}
-        // Data-change pulse: opacity 0.8 → 1.0 → 0.8, 600ms
+        // Data-change pulse: fillOpacity 0.8→1.0→0.8 over 600ms
         animate={
           hasChanged
             ? { fillOpacity: [opacity * 0.8, opacity, opacity * 0.8, opacity] }
@@ -69,7 +73,6 @@ export default function GridCell({
             ? { duration: 0.6, ease: 'easeInOut' }
             : { duration: 0.3 }
         }
-        // Hover scale via transform
         style={{
           transformOrigin: `${cx}px ${cy}px`,
           transform: hovered ? 'scale(1.04)' : 'scale(1)',
@@ -80,31 +83,29 @@ export default function GridCell({
         onMouseLeave={() => { setShowTooltip(false); setHovered(false); }}
       />
 
-      {/* Threat ripple ring */}
+      {/* Threat crossing — CSS ripple ring */}
       {showRipple && (
         <circle
           cx={cx}
           cy={cy}
-          r={size * 0.45}
+          r={rippleR}
           fill="none"
           stroke="var(--accent-threat)"
           strokeWidth={1}
           style={{
-            position: 'absolute',
             animation: 'ripple 1s ease-out forwards',
             transformOrigin: `${cx}px ${cy}px`,
-            borderRadius: '50%',
           }}
         />
       )}
 
-      {/* Tooltip — rendered as foreignObject for crisp monospace text */}
+      {/* Hover tooltip */}
       {showTooltip && (
         <foreignObject
-          x={cx - 72}
-          y={y - 42}
-          width={144}
-          height={38}
+          x={cx - 76}
+          y={y - 44}
+          width={152}
+          height={40}
           style={{ overflow: 'visible', pointerEvents: 'none' }}
         >
           <div
@@ -116,19 +117,23 @@ export default function GridCell({
               fontFamily: 'var(--font-body)',
               fontWeight: 400,
               fontSize: '10px',
-              padding: '4px 7px',
+              padding: '4px 8px',
               whiteSpace: 'nowrap',
               lineHeight: 1.5,
               borderRadius: 0,
             }}
           >
-            <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)', fontSize: '9px', letterSpacing: '0.1em' }}>
+            <span
+              style={{
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-display)',
+                fontSize: '9px',
+                letterSpacing: '0.1em',
+              }}
+            >
               {gridId}
             </span>
-            {' · '}
-            {signalCount} sig
-            {' · '}
-            Δ{noiseDelta >= 0 ? '+' : ''}{noiseDelta}
+            {' · '}{signalCount} sig{' · '}Δ{noiseDelta >= 0 ? '+' : ''}{noiseDelta}
           </div>
         </foreignObject>
       )}

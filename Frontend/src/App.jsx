@@ -10,9 +10,9 @@ import StatusBar from './components/StatusBar';
 
 // Page-load stagger: 80ms delay increments (topbar → map → sidebar → statusbar)
 const STAGGER = {
-  topbar:    { delay: 0 },
-  map:       { delay: 0.08 },
-  sidebar:   { delay: 0.16 },
+  topbar: { delay: 0 },
+  map: { delay: 0.08 },
+  sidebar: { delay: 0.16 },
   statusbar: { delay: 0.24 },
 };
 
@@ -99,10 +99,48 @@ export default function App() {
           }}
         >
           {/* Noise meter */}
-          <NoiseMeter value={noiseMeterValue} />
+          <div className="sidebar-section">
+            <div style={{ width: "100%", display: "block" }}>
+              <NoiseMeter level={noiseMeterValue} />
+            </div>
+          </div>
+
+          {/* ── Section divider ───────────────────── */}
+          <div
+            style={{
+              borderTop: '1px solid var(--border-dim)',
+              padding: '6px 12px 0',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: '10px',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+              flexShrink: 0,
+            }}
+          >
+            ALERT CONFIG
+          </div>
 
           {/* Threshold config */}
           <ThresholdConfig defaultValue={50} />
+
+          {/* ── Section divider ───────────────────── */}
+          <div
+            style={{
+              borderTop: '1px solid var(--border-dim)',
+              padding: '6px 12px 0',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: '10px',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+              flexShrink: 0,
+            }}
+          >
+            SIGNAL LOG
+          </div>
 
           {/* Event feed — takes remaining space */}
           <div

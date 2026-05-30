@@ -3,7 +3,6 @@ import GridCell from './GridCell';
 import NoiseOverlay from './NoiseOverlay';
 
 const GRID_SIZE = 16;
-const CELL_PADDING = 2; // px inset so border breathes
 
 export default function MapGrid({ gridData }) {
   const containerRef = useRef(null);
@@ -49,11 +48,10 @@ export default function MapGrid({ gridData }) {
     <div
       ref={containerRef}
       style={{
-        flex: 1,
-        position: 'relative',
-        background:
-          'radial-gradient(ellipse at 50% 50%, var(--bg-elevated) 0%, var(--bg-void) 100%)',
-        overflow: 'hidden',
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
       }}
     >
       {/* Grid SVG */}
@@ -69,9 +67,10 @@ export default function MapGrid({ gridData }) {
           return (
             <GridCell
               key={row.grid_id}
-              x={colIdx * cellW + CELL_PADDING}
-              y={rowIdx * cellH + CELL_PADDING}
-              size={Math.min(cellW, cellH) - CELL_PADDING}
+              x={colIdx * cellW}
+              y={rowIdx * cellH}
+              width={cellW}
+              height={cellH}
               gridId={row.grid_id}
               threatLevel={row.threat_level}
               signalCount={row.signal_count}

@@ -163,6 +163,8 @@ Frontend/dist/
 # Project meta / prompt files — internal use only
 Antigravity_Prompt.md
 skills-lock.json
+Patch3_ExactCode.md
+UI_Upgrade_Spec.md
 
 # Spec / internal docs
 Frontend/Frontend.md

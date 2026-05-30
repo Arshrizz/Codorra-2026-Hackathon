@@ -1,11 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const THREAT_COLOR = {
-  safe:     'var(--accent-safe)',
-  elevated: 'var(--accent-warn)',
-  threat:   'var(--accent-threat)',
-};
+
 
 export default function EventFeed({ eventLog }) {
   const feedRef = useRef(null);
@@ -88,14 +84,14 @@ export default function EventFeed({ eventLog }) {
                 [{entry.timestamp}]
               </span>
 
-              {/* Grid ID */}
+              {/* Grid ID — always text-primary */}
               <span
                 style={{
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,
                   fontSize: '9px',
                   letterSpacing: '0.1em',
-                  color: THREAT_COLOR[entry.threat_level] ?? 'var(--text-secondary)',
+                  color: 'var(--text-primary)',
                   flexShrink: 0,
                 }}
               >
