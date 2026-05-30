@@ -1,118 +1,132 @@
 import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const LEVEL_COLOR = {
+  threat:   'var(--red-threat)',
+  elevated: 'var(--amber-warn)',
+  safe:     'var(--cyan-dim)',
+};
 
+const LEVEL_BORDER = {
+  threat:   'var(--red-threat)',
+  elevated: 'var(--amber-warn)',
+  safe:     'var(--border-dim)',
+};
 
 export default function EventFeed({ eventLog }) {
   const feedRef = useRef(null);
 
-  // Auto-scroll to top when new entries arrive
   useEffect(() => {
-    if (feedRef.current) {
-      feedRef.current.scrollTop = 0;
-    }
+    if (feedRef.current) feedRef.current.scrollTop = 0;
   }, [eventLog.length]);
 
   return (
     <div
       style={{
-        display: 'flex',
+        display:       'flex',
         flexDirection: 'column',
-        gap: 0,
-        flex: 1,
-        minHeight: 0,
+        flex:          1,
+        minHeight:     0,
       }}
     >
       {/* Panel header */}
       <div
         style={{
-          padding: '8px 12px',
-          borderBottom: '1px solid var(--border-dim)',
-          fontFamily: 'var(--font-display)',
-          fontWeight: 700,
-          fontSize: '10px',
-          letterSpacing: '0.15em',
+          padding:       'var(--space-2) var(--space-3)',
+          borderBottom:  '1px solid var(--border-dim)',
+          fontFamily:    'var(--font-display)',
+          fontWeight:    600,
+          fontSize:      '10px',
+          letterSpacing: '2px',
           textTransform: 'uppercase',
-          color: 'var(--text-muted)',
-          flexShrink: 0,
+          color:         'var(--text-muted)',
+          flexShrink:    0,
         }}
       >
-        LIVE EVENT FEED
+        Signal Log
       </div>
 
       {/* Scrollable list */}
       <div
         ref={feedRef}
         className="no-scrollbar"
-        style={{
-          overflowY: 'auto',
-          flex: 1,
-          padding: '4px 0',
-        }}
+        style={{ overflowY: 'auto', flex: 1, padding: 'var(--space-1) 0' }}
       >
         <AnimatePresence initial={false}>
           {eventLog.map((entry) => (
             <motion.div
               key={entry.id}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              transition={{ duration: 0.18, ease: [0.25, 1, 0.5, 1] }} // ease-out-quart
               style={{
-                padding: '5px 12px',
+                padding:      'var(--space-1) 0 var(--space-1) var(--space-3)',
                 borderBottom: '1px solid var(--border-dim)',
-                fontFamily: 'var(--font-body)',
-                fontWeight: 400,
-                fontSize: '11px',
-                color: 'var(--text-secondary)',
-                lineHeight: 1.5,
-                display: 'flex',
-                gap: '6px',
-                alignItems: 'baseline',
+                borderLeft:   `2px solid ${LEVEL_BORDER[entry.threat_level] ?? 'var(--border-dim)'}`,
+                display:      'flex',
+                gap:          'var(--space-2)',
+                alignItems:   'baseline',
+                animation:    'entry-shimmer 0.3s ease-out',
               }}
             >
-              {/* Timestamp */}
+              {/* Timestamp — Space Mono data tier */}
+              <span
+                style={{
+                  fontFamily:    'var(--font-data)',
+                  fontWeight:    400,
+                  fontSize:      '9px',
+                  color:         'var(--text-dim)',
+                  flexShrink:    0,
+                  letterSpacing: '0.5px',
+                }}
+              >
+                {entry.timestamp}
+              </span>
+
+              {/* Separator */}
+              <span style={{ color: 'var(--border-active)', flexShrink: 0 }}>·</span>
+
+              {/* Sector ID — Barlow Condensed display tier */}
+              <span
+                style={{
+                  fontFamily:    'var(--font-display)',
+                  fontWeight:    600,
+                  fontSize:      '11px',
+                  letterSpacing: '1px',
+                  color:         LEVEL_COLOR[entry.threat_level] ?? 'var(--cyan)',
+                  flexShrink:    0,
+                }}
+              >
+                [{entry.grid_id}]
+              </span>
+
+              {/* Separator */}
+              <span style={{ color: 'var(--border-active)', flexShrink: 0 }}>·</span>
+
+              {/* Delta — data tier */}
               <span
                 style={{
                   fontFamily: 'var(--font-data)',
-                  fontWeight: 500,
-                  fontSize: '10px',
-                  color: 'var(--text-muted)',
-                  flexShrink: 0,
-                }}
-              >
-                [{entry.timestamp}]
-              </span>
-
-              {/* Grid ID — always text-primary */}
-              <span
-                style={{
-                  fontFamily: 'var(--font-display)',
                   fontWeight: 700,
-                  fontSize: '9px',
-                  letterSpacing: '0.1em',
-                  color: 'var(--text-primary)',
+                  fontSize:   '10px',
+                  color:      'var(--text-secondary)',
                   flexShrink: 0,
                 }}
               >
-                {entry.grid_id}
+                Δ+{entry.signal_delta}
               </span>
 
-              <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>·</span>
-
-              {/* Delta */}
-              <span style={{ flexShrink: 0 }}>
-                Δ+{entry.signal_delta} signals
-              </span>
-
-              <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>·</span>
-
-              {/* Privacy tag */}
+              {/* ε-protected label — UI tier */}
               <span
                 style={{
-                  color: 'var(--accent-noise)',
-                  fontSize: '10px',
-                  flexShrink: 0,
+                  fontFamily:    'var(--font-ui)',
+                  fontWeight:    300,
+                  fontSize:      '9px',
+                  color:         'var(--text-muted)',
+                  flexShrink:    0,
+                  marginLeft:    'auto',
+                  paddingRight:  '10px',
                 }}
               >
                 ε-protected
@@ -124,13 +138,14 @@ export default function EventFeed({ eventLog }) {
         {eventLog.length === 0 && (
           <div
             style={{
-              padding: '16px 12px',
-              fontFamily: 'var(--font-body)',
-              fontSize: '11px',
-              color: 'var(--text-muted)',
+              padding:    'var(--space-4) var(--space-3)',
+              fontFamily: 'var(--font-ui)',
+              fontWeight: 300,
+              fontSize:   '11px',
+              color:      'var(--text-muted)',
             }}
           >
-            AWAITING SIGNALS...
+            Awaiting signals…
           </div>
         )}
       </div>

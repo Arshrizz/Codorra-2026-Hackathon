@@ -1,155 +1,178 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import './styles/globals.css';
-import { useGridData } from './hooks/useGridData';
-import Topbar from './components/Topbar';
-import MapGrid from './components/MapPanel/MapGrid';
-import EventFeed from './components/Sidebar/EventFeed';
-import NoiseMeter from './components/Sidebar/NoiseMeter';
-import ThresholdConfig from './components/Sidebar/ThresholdConfig';
-import StatusBar from './components/StatusBar';
+import './styles/responsive.css';
+import { useGridData }    from './hooks/useGridData';
+import Topbar             from './components/Topbar';
+import MapGrid            from './components/MapPanel/MapGrid';
+import EventFeed          from './components/Sidebar/EventFeed';
+import EpsMeter           from './components/Sidebar/EpsMeter';
+import MetricCards        from './components/Sidebar/MetricCards';
+import SignalTimeline     from './components/Sidebar/SignalTimeline';
+import ThresholdConfig    from './components/Sidebar/ThresholdConfig';
+import ThreatBanner       from './components/ThreatBanner';
+import StatusBar          from './components/StatusBar';
 
-// Page-load stagger: 80ms delay increments (topbar → map → sidebar → statusbar)
-const STAGGER = {
-  topbar: { delay: 0 },
-  map: { delay: 0.08 },
-  sidebar: { delay: 0.16 },
-  statusbar: { delay: 0.24 },
-};
-
+// Page-load stagger
 const fadeIn = (delay) => ({
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  transition: { duration: 0.35, ease: 'easeOut', delay },
+  initial:    { opacity: 0 },
+  animate:    { opacity: 1 },
+  transition: { duration: 0.4, ease: 'easeOut', delay },
 });
 
-export default function App() {
-  const { gridData, eventLog, stats } = useGridData();
+const THREAT_THRESHOLD = 50;
 
-  // Derive noise meter level from privacy budget (0–10 scale)
-  const noiseMeterValue = Math.round((100 - (stats.privacyBudget ?? 100)) / 10);
+export default function App() {
+  const {
+    gridData,
+    eventLog,
+    stats,
+    epsilon,
+    isPaused,
+    injectAnomaly,
+    resetGrid,
+    togglePause,
+  } = useGridData();
+
+  // ── Threat alert detection ───────────────────────────────────────────────
+  const [currentAlert, setCurrentAlert] = useState(null);
+  const prevGridRef = useRef(new Map());
+
+  useEffect(() => {
+    for (const [id, row] of gridData) {
+      const prev = prevGridRef.current.get(id);
+      // New threat crossing: prev below threshold, now above
+      if (
+        prev &&
+        prev.signal_count < THREAT_THRESHOLD &&
+        row.signal_count >= THREAT_THRESHOLD
+      ) {
+        const score = Math.min(100, 50 + (row.signal_count - THREAT_THRESHOLD) * 0.8 + Math.random() * 10);
+        setCurrentAlert({
+          id:               `${id}-${Date.now()}`,
+          grid_id:          id,
+          signalCount:      row.signal_count,
+          score:            parseFloat(score.toFixed(1)),
+          epsilonRemaining: epsilon,
+        });
+        break; // show one at a time
+      }
+    }
+    prevGridRef.current = new Map(gridData);
+  }, [gridData, epsilon]);
+
+  const dismissAlert = useCallback(() => setCurrentAlert(null), []);
 
   return (
-    <div
-      className="bg-crosshatch"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        width: '100vw',
-        overflow: 'hidden',
-        minWidth: '1280px',
-      }}
-    >
-      {/* Topbar */}
-      <motion.div {...fadeIn(STAGGER.topbar.delay)}>
+    <div className="bg-crosshatch app-container">
+      {/* ── Topbar ─────────────────────────────────────────── */}
+      <motion.div {...fadeIn(0)}>
         <Topbar />
       </motion.div>
 
-      {/* Main content row */}
-      <div
-        style={{
-          display: 'flex',
-          flex: 1,
-          overflow: 'hidden',
-          minHeight: 0,
-        }}
-      >
-        {/* Map Panel — ~65% width */}
+      {/* ── Main content row ───────────────────────────────── */}
+      <div className="main-content-row">
+        {/* ── Left ε-Budget strip ────────────────────────── */}
         <motion.div
-          {...fadeIn(STAGGER.map.delay)}
+          {...fadeIn(0.06)}
           style={{
-            flex: '0 0 65%',
-            display: 'flex',
+            width:         '44px',
+            flexShrink:    0,
+            display:       'flex',
             flexDirection: 'column',
-            borderRight: '1px solid var(--border-dim)',
-            overflow: 'hidden',
+            alignItems:    'center',
+            background:    'var(--bg-surface)',
+            borderRight:   '1px solid var(--border-dim)',
+          }}
+        >
+          <EpsMeter epsilon={epsilon} />
+        </motion.div>
+
+        {/* ── Map Panel ──────────────────────────────────── */}
+        <motion.div
+          {...fadeIn(0.10)}
+          style={{
+            flex:          '1 1 0',
+            display:       'flex',
+            flexDirection: 'column',
+            borderRight:   '1px solid var(--border-dim)',
+            overflow:      'hidden',
+            position:      'relative',
+            minHeight:     '400px', // Map needs min height on mobile
           }}
         >
           {/* Map panel header */}
           <div
             style={{
-              padding: '6px 14px',
-              borderBottom: '1px solid var(--border-dim)',
-              background: 'var(--bg-surface)',
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              fontSize: '10px',
-              letterSpacing: '0.15em',
+              padding:       'var(--space-2) var(--space-3)',
+              borderBottom:  '1px solid var(--border-dim)',
+              fontFamily:    'var(--font-display)',
+              fontWeight:    600,
+              fontSize:      '10px',
+              letterSpacing: '2px',
               textTransform: 'uppercase',
-              color: 'var(--text-muted)',
-              flexShrink: 0,
+              color:         'var(--text-muted)',
+              flexShrink:    0,
             }}
           >
-            CITY GRID — THREAT HEATMAP · 16×16
+            City Grid — Threat Heatmap · 16×16
           </div>
-          <MapGrid gridData={gridData} />
+
+          {/* Grid (fills remaining space) */}
+          <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+            {/* Threat banner — absolute inside map panel */}
+            <ThreatBanner alert={currentAlert} onDismiss={dismissAlert} />
+
+            <MapGrid
+              gridData={gridData}
+              epsilon={epsilon}
+              isPaused={isPaused}
+              onInject={injectAnomaly}
+              onReset={resetGrid}
+              onTogglePause={togglePause}
+            />
+          </div>
         </motion.div>
 
-        {/* Sidebar — ~35% width */}
+        {/* ── Right Sidebar ──────────────────────────────── */}
         <motion.div
-          {...fadeIn(STAGGER.sidebar.delay)}
-          style={{
-            flex: '0 0 35%',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--bg-surface)',
-            borderLeft: '1px solid var(--border-dim)',
-            overflow: 'hidden',
-            minHeight: 0,
-          }}
+          {...fadeIn(0.16)}
+          className="sidebar-panel"
         >
-          {/* Noise meter */}
-          <div className="sidebar-section">
-            <div style={{ width: "100%", display: "block" }}>
-              <NoiseMeter level={noiseMeterValue} />
-            </div>
+          {/* Metric cards */}
+          <div style={{ flexShrink: 0 }}>
+            <MetricCards stats={stats} epsilon={epsilon} />
           </div>
 
-          {/* ── Section divider ───────────────────── */}
+          {/* Alert config */}
           <div
             style={{
-              borderTop: '1px solid var(--border-dim)',
-              padding: '6px 12px 0',
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              fontSize: '10px',
-              letterSpacing: '0.15em',
+              borderTop:     '1px solid var(--border-dim)',
+              padding:       'var(--space-2) var(--space-3) 0',
+              fontFamily:    'var(--font-display)',
+              fontWeight:    600,
+              fontSize:      '10px',
+              letterSpacing: '2px',
               textTransform: 'uppercase',
-              color: 'var(--text-muted)',
-              flexShrink: 0,
+              color:         'var(--text-muted)',
+              flexShrink:    0,
             }}
           >
-            ALERT CONFIG
+            Alert Config
           </div>
+          <ThresholdConfig defaultValue={THREAT_THRESHOLD} />
 
-          {/* Threshold config */}
-          <ThresholdConfig defaultValue={50} />
+          {/* Signal timeline */}
+          <SignalTimeline eventLog={eventLog} />
 
-          {/* ── Section divider ───────────────────── */}
+          {/* Event log — takes remaining space */}
           <div
             style={{
-              borderTop: '1px solid var(--border-dim)',
-              padding: '6px 12px 0',
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              fontSize: '10px',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-              color: 'var(--text-muted)',
-              flexShrink: 0,
-            }}
-          >
-            SIGNAL LOG
-          </div>
-
-          {/* Event feed — takes remaining space */}
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
+              flex:          1,
+              display:       'flex',
               flexDirection: 'column',
-              minHeight: 0,
-              overflow: 'hidden',
+              minHeight:     0,
+              overflow:      'hidden',
             }}
           >
             <EventFeed eventLog={eventLog} />
@@ -157,8 +180,8 @@ export default function App() {
         </motion.div>
       </div>
 
-      {/* Status bar */}
-      <motion.div {...fadeIn(STAGGER.statusbar.delay)}>
+      {/* ── Status bar ─────────────────────────────────────── */}
+      <motion.div {...fadeIn(0.22)}>
         <StatusBar stats={stats} />
       </motion.div>
     </div>

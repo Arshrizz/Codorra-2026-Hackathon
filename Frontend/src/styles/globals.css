@@ -1,39 +1,68 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@700&family=DM+Mono:wght@400&family=Roboto+Mono:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 /* ============================================================
-   VEIL — Design Token Foundation
+   VEIL — Design Token Foundation v2.0
+   Light Mode Premium UI
    All colors come exclusively from CSS custom properties.
-   Zero hardcoded hex values may appear in JSX or component files.
+   Zero hardcoded hex values may appear in JSX component files.
    ============================================================ */
 
 :root {
-  /* Backgrounds */
-  --bg-void:       #080B0F;
-  --bg-surface:    #0D1117;
-  --bg-elevated:   #161B22;
+  /* ── Backgrounds (OKLCH tinted white/cool-gray) ──────────── */
+  --bg-void:      oklch(99% 0.005 250);
+  --bg-surface:   oklch(97% 0.008 250);
+  --bg-grid:      oklch(96% 0.01 250);
+  --bg-cell:      oklch(95% 0.012 250);
+  --bg-elevated:  oklch(100% 0 0);
 
-  /* Borders */
-  --border-dim:    #21262D;
-  --border-active: #30363D;
+  /* ── Borders ─────────────────────────────────────────────── */
+  --border-dim:    oklch(88% 0.015 250);
+  --border-active: oklch(78% 0.02 250);
 
-  /* Text */
-  --text-primary:  #E6EDF3;
-  --text-secondary:#8B949E;
-  --text-muted:    #484F58;
+  /* ── Text ───────────────────────────────────────────────── */
+  --text-primary:  oklch(20% 0.02 250);
+  --text-secondary:oklch(40% 0.02 250);
+  --text-muted:    oklch(60% 0.01 250);
+  --text-dim:      oklch(75% 0.01 250);
 
-  /* Accent — threat encoding */
-  --accent-safe:   #238636;
-  --accent-warn:   #D29922;
-  --accent-threat: #DA3633;
-  --accent-noise:  #1F6FEB;
+  /* ── Primary accent (Cobalt Blue) ───────────────────────── */
+  --cyan:          oklch(55% 0.15 250);
+  --cyan-dim:      oklch(92% 0.04 250);
 
-  /* Grid crosshatch line */
-  --grid-line:     rgba(48, 54, 61, 0.6);
+  /* ── Threat encoding ────────────────────────────────────── */
+  --green-safe:    oklch(60% 0.15 155);
+  --amber-warn:    oklch(65% 0.16 55);
+  --red-threat:    oklch(55% 0.22 25);
 
-  /* Typography */
-  --font-display: 'IBM Plex Mono', monospace;
-  --font-body:    'DM Mono', monospace;
-  --font-data:    'Roboto Mono', monospace;
+  /* ── Legacy aliases (keeps existing components functional) ─ */
+  --accent-safe:   var(--green-safe);
+  --accent-warn:   var(--amber-warn);
+  --accent-threat: var(--red-threat);
+  --accent-noise:  var(--cyan);
+
+  /* ── Typography ─────────────────────────────────────────── */
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-data:    'JetBrains Mono', monospace;
+  --font-ui:      'Plus Jakarta Sans', sans-serif;
+  --font-body:    'JetBrains Mono', monospace;
+
+  /* ── Grid crosshatch line ───────────────────────────────── */
+  --grid-line:     oklch(90% 0.01 250 / 0.5);
+
+  /* ── Impeccable 4pt Spacing Scale ───────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Impeccable Easing Curves ───────────────────────────── */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ============================================================
@@ -53,7 +82,7 @@ html, body, #root {
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
   font-weight: 400;
   background-color: var(--bg-void);
   color: var(--text-primary);
@@ -63,7 +92,7 @@ body {
 
 /* ============================================================
    Crosshatch Grid Background
-   Applied to the root app container via .bg-crosshatch class.
+   Applied to root app container via .bg-crosshatch
    ============================================================ */
 
 .bg-crosshatch {
@@ -86,50 +115,97 @@ body {
 }
 
 /* ============================================================
-   Keyframes
+   Keyframes — Every animation encodes meaning.
    ============================================================ */
 
-/* Threat crossing — red ring emanating from cell */
-@keyframes ripple {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(2.5);
-    opacity: 0;
-  }
+/* Cell entry — signal first received by this zone */
+@keyframes cell-enter {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-/* LIVE status indicator blink */
+/* Cell breathing — system is alive, data is live */
+@keyframes cell-breathe {
+  0%, 100% { opacity: 0.82; }
+  50%       { opacity: 1.0;  }
+}
+
+/* Signal delta bump — new data received */
+@keyframes cell-bump {
+  0%   { transform: scale(1);    }
+  35%  { transform: scale(1.08); }
+  100% { transform: scale(1);    }
+}
+
+/* Threat ring — active danger persisting */
+@keyframes threat-ring {
+  0%   { transform: translate(-50%, -50%) scale(0.7); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+}
+
+/* Grid shimmer — ambient premium diagonal sweep */
+@keyframes grid-shimmer {
+  0%   { transform: translateX(-150%) skewX(-15deg); opacity: 0;    }
+  8%   { opacity: 0.045; }
+  92%  { opacity: 0.045; }
+  100% { transform: translateX(300%)  skewX(-15deg); opacity: 0;    }
+}
+
+/* Threat alert banner slide-in */
+@keyframes slide-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+/* Countdown bar drain over N seconds */
+@keyframes drain {
+  from { width: 100%; }
+  to   { width: 0%;   }
+}
+
+/* ε critical — digit blinks red */
+@keyframes blink {
+  0%, 100% { opacity: 1;    }
+  50%       { opacity: 0.15; }
+}
+
+/* LIVE status indicator */
 @keyframes pulse-dot {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.15;
-  }
+  0%, 100% { opacity: 1;    }
+  50%       { opacity: 0.2;  }
+}
+
+/* New log entry shimmer */
+@keyframes entry-shimmer {
+  from { opacity: 0.5; }
+  to   { opacity: 1;   }
+}
+
+/* Ripple ring emanating from cell center (legacy — used in GridCell) */
+@keyframes ripple {
+  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
 }
 
 /* ============================================================
-   Utility classes
+   Utility Classes
    ============================================================ */
 
 .font-display {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-}
-
-.font-body {
-  font-family: var(--font-body);
-  font-weight: 400;
+  letter-spacing: 0.06em;
 }
 
 .font-data {
   font-family: var(--font-data);
-  font-weight: 500;
+  font-weight: 400;
+}
+
+.font-ui {
+  font-family: var(--font-ui);
+  font-weight: 300;
 }
 
 /* Scrollbar suppression */

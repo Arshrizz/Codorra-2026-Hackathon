@@ -1,24 +1,50 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// Threat level enum values
-const THREAT_LEVELS = ['safe', 'elevated', 'threat'];
+// ── Constants ────────────────────────────────────────────────────────────────
+let _eventSeq = 0; // monotonic counter — guarantees unique event IDs
+const nextId = (prefix) => `${prefix}-${++_eventSeq}`;
 
-// ── Mock data generator ─────────────────────────────────────────────────────
-// Generates a full 16×16 grid of mock cells so the UI works without Supabase.
+const EPSILON_START   = 1.0;
+const EPSILON_DECAY   = 0.008;   // per 2000ms tick → full drain ≈ 4 min
+const EPSILON_FLOOR   = 0.05;
+const EPSILON_INJECT_COST = 0.05;
+const THREAT_THRESHOLD    = 50;  // signal_count ≥ this → threat level
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function getThreatLevel(signalCount) {
+  if (signalCount >= THREAT_THRESHOLD) return 'threat';
+  if (signalCount >= 20) return 'elevated';
+  return 'safe';
+}
+
+// Laplace noise sampler — b = 1/epsilon
+function laplace(b) {
+  const u = Math.random() - 0.5;
+  return -b * Math.sign(u) * Math.log(1 - 2 * Math.abs(u));
+}
+
+// Generates a full 16×16 grid of mock cells — realistic distribution:
+// ~65% safe (0–19), ~25% elevated (20–49), ~10% threat (50+)
 function buildMockGrid() {
   const data = new Map();
   for (let row = 0; row < 16; row++) {
     for (let col = 0; col < 16; col++) {
       const gridId = `${String(row).padStart(2, '0')}-${String(col).padStart(2, '0')}`;
       const roll = Math.random();
-      const threatLevel =
-        roll < 0.7 ? 'safe' : roll < 0.9 ? 'elevated' : 'threat';
+      const signalCount =
+        roll < 0.65
+          ? Math.floor(Math.random() * 20)          // safe: 0–19
+          : roll < 0.90
+          ? 20 + Math.floor(Math.random() * 30)     // elevated: 20–49
+          : 50 + Math.floor(Math.random() * 50);    // threat: 50–99
+
       data.set(gridId, {
-        grid_id: gridId,
-        signal_count: Math.floor(Math.random() * 120),
-        noise_delta: parseFloat((Math.random() * 2 - 1).toFixed(3)),
+        grid_id:      gridId,
+        signal_count: signalCount,
+        noise_delta:  parseFloat((Math.random() * 2 - 1).toFixed(3)),
         last_updated: new Date().toISOString(),
-        threat_level: threatLevel,
+        threat_level: getThreatLevel(signalCount),
       });
     }
   }
@@ -29,14 +55,11 @@ function buildMockEventLog(gridData) {
   const entries = [];
   for (const [, row] of gridData) {
     if (row.threat_level !== 'safe') {
-      const d = new Date(Date.now() - Math.random() * 300000);
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mm = String(d.getMinutes()).padStart(2, '0');
-      const ss = String(d.getSeconds()).padStart(2, '0');
+      const d = new Date(Date.now() - Math.random() * 300_000);
       entries.push({
-        id: `${row.grid_id}-${d.getTime()}`,
-        timestamp: `${hh}:${mm}:${ss}`,
-        grid_id: row.grid_id,
+        id:           nextId(row.grid_id),
+        timestamp:    d.toTimeString().slice(0, 8),
+        grid_id:      row.grid_id,
         signal_delta: Math.floor(Math.random() * 30) + 1,
         threat_level: row.threat_level,
       });
@@ -45,60 +68,59 @@ function buildMockEventLog(gridData) {
   return entries.slice(0, 50).sort(() => Math.random() - 0.5);
 }
 
-// ── Hook ────────────────────────────────────────────────────────────────────
+// ── Hook ─────────────────────────────────────────────────────────────────────
 export function useGridData() {
   const [gridData, setGridData] = useState(() => buildMockGrid());
-  const [eventLog, setEventLog] = useState(() => []);
+  const [eventLog, setEventLog] = useState([]);
+  const [epsilon,  setEpsilon]  = useState(EPSILON_START);
+  const [isPaused, setIsPaused] = useState(false);
   const [stats, setStats] = useState({
-    lastSync: '--:--:--',
-    signalsProcessed: 0,
-    privacyBudget: 100,
-    activeGrids: 0,
+    lastSync:          '--:--:--',
+    signalsProcessed:  0,
+    privacyBudget:     100,
+    activeGrids:       0,
   });
-  const channelRef = useRef(null);
-  const intervalRef = useRef(null);
+
+  const channelRef   = useRef(null);
+  const intervalRef  = useRef(null);
+  const isPausedRef  = useRef(false);
+
   const hasSupabase =
     import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  // ── Compute stats from grid data ─────────────────────────────────────────
+  // ── Stats ─────────────────────────────────────────────────────────────────
   const recomputeStats = useCallback((gd) => {
     let total = 0;
     let active = 0;
     for (const [, row] of gd) {
-      total += row.signal_count;
+      total  += row.signal_count;
       if (row.threat_level !== 'safe') active++;
     }
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
     setStats({
-      lastSync: `${hh}:${mm}:${ss}`,
+      lastSync:         now.toTimeString().slice(0, 8),
       signalsProcessed: total,
-      privacyBudget: Math.max(40, 100 - Math.floor(total / 300)),
-      activeGrids: active,
+      privacyBudget:    Math.max(5, Math.round(100 - (total / 500) * 100)),
+      activeGrids:      active,
     });
   }, []);
 
-  // ── Append to event log ───────────────────────────────────────────────────
+  // ── Event log append ──────────────────────────────────────────────────────
   const appendEvent = useCallback((row) => {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
+    const ts = new Date().toTimeString().slice(0, 8);
     setEventLog((prev) => {
       const entry = {
-        id: `${row.grid_id}-${Date.now()}`,
-        timestamp: `${hh}:${mm}:${ss}`,
-        grid_id: row.grid_id,
+        id:           nextId(row.grid_id),
+        timestamp:    ts,
+        grid_id:      row.grid_id,
         signal_delta: Math.floor(Math.random() * 20) + 1,
         threat_level: row.threat_level,
       };
-      return [entry, ...prev].slice(0, 50);
+      return [entry, ...prev].slice(0, 60);
     });
   }, []);
 
-  // ── Mock live simulation (when no Supabase) ──────────────────────────────
+  // ── Mock simulation ───────────────────────────────────────────────────────
   const startMockSimulation = useCallback(() => {
     const initial = buildMockGrid();
     setGridData(initial);
@@ -106,50 +128,60 @@ export function useGridData() {
     recomputeStats(initial);
 
     intervalRef.current = setInterval(() => {
+      if (isPausedRef.current) return;
+
+      // Decay epsilon each tick
+      setEpsilon((prev) => Math.max(EPSILON_FLOOR, prev - EPSILON_DECAY));
+
       setGridData((prev) => {
         const next = new Map(prev);
         const keys = Array.from(next.keys());
-        // Mutate 3–8 random cells per tick
+
+        // Mutate 3–8 random cells per tick with Laplace-noised deltas
         const count = Math.floor(Math.random() * 6) + 3;
         for (let i = 0; i < count; i++) {
           const key = keys[Math.floor(Math.random() * keys.length)];
           const old = next.get(key);
-          const roll = Math.random();
-          const threatLevel =
-            roll < 0.68 ? 'safe' : roll < 0.88 ? 'elevated' : 'threat';
+          if (!old) continue;
+
+          // New raw signal + Laplace noise + decay factor
+          const raw     = Math.random() * 14;
+          const noisy   = Math.max(0, old.signal_count * 0.94 + raw + laplace(2.5));
+          const newCount = Math.round(Math.max(0, Math.min(noisy, 120)));
+          const level    = getThreatLevel(newCount);
+
           const updated = {
             ...old,
-            signal_count: Math.max(
-              0,
-              old.signal_count + Math.floor(Math.random() * 10) - 4
-            ),
-            noise_delta: parseFloat((Math.random() * 2 - 1).toFixed(3)),
+            signal_count: newCount,
+            noise_delta:  parseFloat((Math.random() * 2 - 1).toFixed(3)),
             last_updated: new Date().toISOString(),
-            threat_level: threatLevel,
+            threat_level: level,
           };
           next.set(key, updated);
-          if (threatLevel !== 'safe') {
-            appendEvent(updated);
-          }
+
+          if (level !== 'safe') appendEvent(updated);
         }
+
         recomputeStats(next);
         return next;
       });
     }, 2000);
   }, [appendEvent, recomputeStats]);
 
-  // ── Supabase realtime subscription ───────────────────────────────────────
+  // ── Supabase subscription ─────────────────────────────────────────────────
   const startSupabaseSubscription = useCallback(async () => {
     const { supabase } = await import('../lib/supabase');
 
-    // Initial fetch
     const { data: rows } = await supabase
       .from('grid_aggregates')
       .select('*');
 
     if (rows) {
       const gd = new Map();
-      for (const row of rows) gd.set(row.grid_id, row);
+      for (const row of rows) {
+        const level = getThreatLevel(row.signal_count ?? 0);
+        gd.set(row.grid_id, { ...row, threat_level: level });
+      }
       setGridData(gd);
       setEventLog(buildMockEventLog(gd));
       recomputeStats(gd);
@@ -161,19 +193,22 @@ export function useGridData() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'grid_aggregates' },
         (payload) => {
-          const row = payload.new;
+          const row   = payload.new;
+          const level = getThreatLevel(row.signal_count ?? 0);
+          const rowWithLevel = { ...row, threat_level: level };
           setGridData((prev) => {
             const next = new Map(prev);
-            next.set(row.grid_id, row);
+            next.set(row.grid_id, rowWithLevel);
             recomputeStats(next);
             return next;
           });
-          appendEvent(row);
+          appendEvent(rowWithLevel);
         }
       )
       .subscribe();
   }, [appendEvent, recomputeStats]);
 
+  // ── Bootstrap ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (hasSupabase) {
       startSupabaseSubscription();
@@ -181,10 +216,79 @@ export function useGridData() {
       startMockSimulation();
     }
     return () => {
-      if (channelRef.current) channelRef.current.unsubscribe();
+      if (channelRef.current)  channelRef.current.unsubscribe();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [hasSupabase, startMockSimulation, startSupabaseSubscription]);
 
-  return { gridData, eventLog, stats };
+  // Keep ref in sync so interval closure can read it without stale value
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+
+  /** Fire a synthetic 3×3 anomaly cluster (+40–70 signals per cell). */
+  const injectAnomaly = useCallback(() => {
+    setGridData((prev) => {
+      const next    = new Map(prev);
+      const keys    = Array.from(next.keys());
+      const centerKey = keys[2 + Math.floor(Math.random() * 12) * 16 + 2 + Math.floor(Math.random() * 12)];
+      // Fallback if key lookup is off
+      const fallback  = keys[Math.floor(Math.random() * keys.length)];
+      const chosen    = centerKey ?? fallback;
+      const [cr, cc]  = chosen.split('-').map(Number);
+
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const r = cr + dr;
+          const c = cc + dc;
+          if (r < 0 || r >= 16 || c < 0 || c >= 16) continue;
+          const id  = `${String(r).padStart(2, '0')}-${String(c).padStart(2, '0')}`;
+          const old = next.get(id);
+          if (!old) continue;
+          const boost    = 40 + Math.floor(Math.random() * 30);
+          const newCount = Math.min(old.signal_count + boost, 120);
+          const updated  = {
+            ...old,
+            signal_count: newCount,
+            threat_level: getThreatLevel(newCount),
+            last_updated: new Date().toISOString(),
+          };
+          next.set(id, updated);
+          if (updated.threat_level !== 'safe') appendEvent(updated);
+        }
+      }
+
+      recomputeStats(next);
+      return next;
+    });
+    // Each injection costs epsilon budget
+    setEpsilon((prev) => Math.max(EPSILON_FLOOR, prev - EPSILON_INJECT_COST));
+  }, [appendEvent, recomputeStats]);
+
+  /** Zero all cells and restore epsilon to 1.0. */
+  const resetGrid = useCallback(() => {
+    const fresh = buildMockGrid();
+    setGridData(fresh);
+    setEventLog(buildMockEventLog(fresh));
+    setEpsilon(EPSILON_START);
+    recomputeStats(fresh);
+  }, [recomputeStats]);
+
+  /** Toggle live/pause. */
+  const togglePause = useCallback(() => {
+    setIsPaused((p) => !p);
+  }, []);
+
+  return {
+    gridData,
+    eventLog,
+    stats,
+    epsilon,
+    isPaused,
+    injectAnomaly,
+    resetGrid,
+    togglePause,
+  };
 }

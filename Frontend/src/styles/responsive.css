@@ -1,0 +1,49 @@
+/* ============================================================
+   Responsive Layout Classes
+   ============================================================ */
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.main-content-row {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  flex-direction: row;
+}
+
+.sidebar-panel {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-dim);
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .app-container {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .main-content-row {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .sidebar-panel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-dim);
+  }
+}

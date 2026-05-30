@@ -31,7 +31,7 @@ export default function ThresholdConfig({ defaultValue = 50 }) {
   return (
     <div
       style={{
-        padding: '10px 12px 12px',
+        padding: 'var(--space-3)',
         borderBottom: '1px solid var(--border-dim)',
         flexShrink: 0,
       }}
@@ -45,7 +45,7 @@ export default function ThresholdConfig({ defaultValue = 50 }) {
           letterSpacing: '0.15em',
           textTransform: 'uppercase',
           color: 'var(--text-secondary)',
-          marginBottom: '8px',
+          marginBottom: 'var(--space-2)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -84,7 +84,7 @@ export default function ThresholdConfig({ defaultValue = 50 }) {
           fontFamily: 'var(--font-data)',
           fontWeight: 500,
           fontSize: '14px',
-          padding: '6px 8px',
+          padding: 'var(--space-2)',
           outline: 'none',
           appearance: 'textfield',
         }}
@@ -98,7 +98,7 @@ export default function ThresholdConfig({ defaultValue = 50 }) {
 
       <div
         style={{
-          marginTop: '5px',
+          marginTop: 'var(--space-1)',
           fontFamily: 'var(--font-body)',
           fontWeight: 400,
           fontSize: '10px',

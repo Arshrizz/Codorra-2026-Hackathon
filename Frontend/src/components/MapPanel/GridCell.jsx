@@ -1,142 +1,181 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useRef, useEffect, memo } from 'react';
 
-// Color map by threat_level
-const THREAT_COLOR = {
-  safe:     'var(--accent-safe)',
-  elevated: 'var(--accent-warn)',
-  threat:   'var(--accent-threat)',
-};
+const INSET = 0.5;
 
-// Opacity values per spec — sparse map with hot-spots effect
-const THREAT_OPACITY = {
-  safe:     0.20,
-  elevated: 0.50,
-  threat:   0.80,
-};
+// ── 6-band heat ramp — encodes signal count as color + opacity ───────────────
+function getHeatFill(count) {
+  if (count === 0)  return { color: 'var(--bg-cell)', opacity: 1 };
+  if (count <= 5)   return { color: 'color-mix(in srgb, var(--cyan) 20%, var(--bg-cell))', opacity: 0.4 + count * 0.1 };
+  if (count <= 15)  return { color: 'color-mix(in srgb, var(--cyan) 50%, var(--bg-cell))', opacity: 0.5 + (count - 6)  * 0.04 };
+  if (count <= 30)  return { color: 'var(--cyan)', opacity: 0.5 + (count - 16) * 0.025 };
+  if (count <= 49)  return { color: 'var(--amber-warn)', opacity: 0.5 + (count - 31) * 0.02  };
+  return             { color: 'var(--red-threat)', opacity: Math.min(0.75 + (count - 50) * 0.01, 1.0) };
+}
 
-const INSET = 0.5; // half-pixel inset for crisp border rendering
-
-export default function GridCell({
+const GridCell = memo(function GridCell({
   x,
   y,
   width,
   height,
   gridId,
-  threatLevel,
   signalCount,
   noiseDelta,
   hasChanged,
   isThreatCrossing,
+  cellPhase = 0, // 0–2π offset for breathing sine
 }) {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [showRipple, setShowRipple] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const rippleTimerRef = useRef(null);
+  const [showTooltip,   setShowTooltip]   = useState(false);
+  const [showRipple,    setShowRipple]    = useState(false);
+  const [bumpActive,    setBumpActive]    = useState(false);
+  const [enterActive,   setEnterActive]   = useState(false);
+  const rippleTimer  = useRef(null);
+  const bumpTimer    = useRef(null);
+  const prevCount    = useRef(signalCount);
 
-  const color   = THREAT_COLOR[threatLevel]   ?? THREAT_COLOR.safe;
-  const opacity = THREAT_OPACITY[threatLevel] ?? THREAT_OPACITY.safe;
+  const { color, opacity } = getHeatFill(signalCount);
+  const cx = x + width  / 2;
+  const cy = y + height / 2;
 
-  // Trigger ripple on threat crossing
+  // Cell entry on mount
+  useEffect(() => {
+    setEnterActive(true);
+    const t = setTimeout(() => setEnterActive(false), 220);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Bump on delta receive
+  useEffect(() => {
+    if (hasChanged && signalCount !== prevCount.current) {
+      setBumpActive(true);
+      clearTimeout(bumpTimer.current);
+      bumpTimer.current = setTimeout(() => setBumpActive(false), 200);
+    }
+    prevCount.current = signalCount;
+  }, [hasChanged, signalCount]);
+
+  // Threat crossing ripple
   useEffect(() => {
     if (isThreatCrossing) {
       setShowRipple(true);
-      clearTimeout(rippleTimerRef.current);
-      rippleTimerRef.current = setTimeout(() => setShowRipple(false), 1100);
+      clearTimeout(rippleTimer.current);
+      rippleTimer.current = setTimeout(() => setShowRipple(false), 1700);
     }
-    return () => clearTimeout(rippleTimerRef.current);
+    return () => clearTimeout(rippleTimer.current);
   }, [isThreatCrossing]);
 
-  const cx = x + width  / 2;
-  const cy = y + height / 2;
-  const rippleR = Math.min(width, height) * 0.45;
+  // Breathing: opacity oscillates between 82%–100% at 2.8s period with phase offset
+  const breatheDelay = `-${(cellPhase * 2.8).toFixed(2)}s`;
+
+  const isThreat    = signalCount >= 50;
+  const isElevated  = signalCount >= 20 && signalCount < 50;
 
   return (
-    <g>
-      {/* Cell body */}
-      <motion.rect
+    <g
+      role="gridcell"
+      aria-label={`Sector ${gridId} - Signals: ${signalCount}`}
+      tabIndex={0}
+      onFocus={() => setShowTooltip(true)}
+      onBlur={() => setShowTooltip(false)}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <title>Sector {gridId} - Signals: {signalCount}, Threat: {isThreat ? 'high' : isElevated ? 'elevated' : 'safe'}</title>
+      {/* ── Cell body ─────────────────────────────────────────── */}
+      <rect
         x={x + INSET}
         y={y + INSET}
         width={width  - INSET * 2}
         height={height - INSET * 2}
         fill={color}
+        fillOpacity={opacity}
         stroke="var(--border-dim)"
-        strokeWidth={0.5}
-        // Data-change pulse: fillOpacity 0.8→1.0→0.8 over 600ms
-        animate={
-          hasChanged
-            ? { fillOpacity: [opacity * 0.8, opacity, opacity * 0.8, opacity] }
-            : { fillOpacity: opacity }
-        }
-        transition={
-          hasChanged
-            ? { duration: 0.6, ease: 'easeInOut' }
-            : { duration: 0.3 }
-        }
+        strokeWidth={0.4}
         style={{
           transformOrigin: `${cx}px ${cy}px`,
-          transform: hovered ? 'scale(1.04)' : 'scale(1)',
-          transition: 'transform 120ms ease',
+          animation: enterActive
+            ? `cell-enter 200ms var(--ease-out-quint) forwards`
+            : bumpActive
+            ? `cell-bump 180ms ease-out forwards`
+            : signalCount > 0
+            ? `cell-breathe 2.8s ease-in-out ${breatheDelay} infinite`
+            : 'none',
           cursor: 'crosshair',
         }}
-        onMouseEnter={() => { setShowTooltip(true); setHovered(true); }}
-        onMouseLeave={() => { setShowTooltip(false); setHovered(false); }}
       />
 
-      {/* Threat crossing — CSS ripple ring */}
-      {showRipple && (
+      {/* ── Threat ring — expanding concentric ring ─────────── */}
+      {(isThreat) && (
         <circle
           cx={cx}
           cy={cy}
-          r={rippleR}
+          r={Math.min(width, height) * 0.38}
           fill="none"
-          stroke="var(--accent-threat)"
-          strokeWidth={1}
+          stroke="var(--red-threat)"
+          strokeWidth={1.2}
           style={{
-            animation: 'ripple 1s ease-out forwards',
+            animation: 'threat-ring 1.6s ease-out infinite',
             transformOrigin: `${cx}px ${cy}px`,
+            pointerEvents: 'none',
           }}
         />
       )}
 
-      {/* Hover tooltip */}
+      {/* ── One-shot ripple on threat crossing ──────────────── */}
+      {showRipple && (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={Math.min(width, height) * 0.45}
+          fill="none"
+          stroke="var(--red-threat)"
+          strokeWidth={1.5}
+          style={{
+            animation: 'ripple 1.1s ease-out forwards',
+            transformOrigin: `${cx}px ${cy}px`,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      {/* ── Hover tooltip ─────────────────────────────────── */}
       {showTooltip && (
         <foreignObject
-          x={cx - 76}
-          y={y - 44}
-          width={152}
-          height={40}
+          x={cx - 80}
+          y={y - 48}
+          width={160}
+          height={44}
           style={{ overflow: 'visible', pointerEvents: 'none' }}
         >
           <div
             xmlns="http://www.w3.org/1999/xhtml"
             style={{
-              background: 'var(--bg-elevated)',
-              border: '1px solid var(--border-active)',
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-body)',
-              fontWeight: 400,
-              fontSize: '10px',
-              padding: '4px 8px',
-              whiteSpace: 'nowrap',
-              lineHeight: 1.5,
-              borderRadius: 0,
+              background:   'var(--bg-elevated)',
+              border:       '1px solid var(--border-active)',
+              color:        'var(--text-secondary)',
+              fontFamily:   "var(--font-data)",
+              fontSize:     '10px',
+              padding:      '5px 9px',
+              whiteSpace:   'nowrap',
+              lineHeight:   1.6,
+              borderRadius: '2px',
             }}
           >
-            <span
-              style={{
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-display)',
-                fontSize: '9px',
-                letterSpacing: '0.1em',
-              }}
-            >
-              {gridId}
+            <span style={{ color: 'var(--cyan)', fontWeight: 700, letterSpacing: '1px' }}>
+              [{gridId}]
             </span>
-            {' · '}{signalCount} sig{' · '}Δ{noiseDelta >= 0 ? '+' : ''}{noiseDelta}
+            {' · '}
+            <span style={{ color: signalCount >= 50 ? 'var(--red-threat)' : signalCount >= 20 ? 'var(--amber-warn)' : 'var(--text-secondary)' }}>
+              {signalCount} sig
+            </span>
+            {' · '}
+            <span style={{ color: 'var(--text-muted)' }}>
+              Δ{noiseDelta >= 0 ? '+' : ''}{noiseDelta}
+            </span>
           </div>
         </foreignObject>
       )}
     </g>
   );
-}
+});
+
+export default GridCell;

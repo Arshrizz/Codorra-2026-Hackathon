@@ -16,10 +16,10 @@ export default function StatusBar({ stats }) {
   return (
     <footer
       style={{
-        height: '32px',
+        height: 'var(--space-8)',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 16px',
+        padding: '0 var(--space-4)',
         borderTop: '1px solid var(--border-dim)',
         background: 'var(--bg-surface)',
         gap: 0,
@@ -33,7 +33,7 @@ export default function StatusBar({ stats }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: 'var(--space-2)',
             fontFamily: 'var(--font-body)',
             fontWeight: 400,
             fontSize: '11px',
@@ -45,7 +45,7 @@ export default function StatusBar({ stats }) {
             <span
               style={{
                 color: 'var(--border-active)',
-                margin: '0 10px',
+                margin: '0 var(--space-3)',
                 userSelect: 'none',
               }}
             >
