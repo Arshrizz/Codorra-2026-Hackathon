@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@700&family=DM+Mono:wght@400&family=Roboto+Mono:wght@500&display=swap');
+
+/* ============================================================
+   VEIL — Design Token Foundation
+   All colors come exclusively from CSS custom properties.
+   Zero hardcoded hex values may appear in JSX or component files.
+   ============================================================ */
+
+:root {
+  /* Backgrounds */
+  --bg-void:       #080B0F;
+  --bg-surface:    #0D1117;
+  --bg-elevated:   #161B22;
+
+  /* Borders */
+  --border-dim:    #21262D;
+  --border-active: #30363D;
+
+  /* Text */
+  --text-primary:  #E6EDF3;
+  --text-secondary:#8B949E;
+  --text-muted:    #484F58;
+
+  /* Accent — threat encoding */
+  --accent-safe:   #238636;
+  --accent-warn:   #D29922;
+  --accent-threat: #DA3633;
+  --accent-noise:  #1F6FEB;
+
+  /* Grid crosshatch line */
+  --grid-line:     rgba(48, 54, 61, 0.6);
+
+  /* Typography */
+  --font-display: 'IBM Plex Mono', monospace;
+  --font-body:    'DM Mono', monospace;
+  --font-data:    'Roboto Mono', monospace;
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  background-color: var(--bg-void);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   Crosshatch Grid Background
+   Applied to the root app container via .bg-crosshatch class.
+   ============================================================ */
+
+.bg-crosshatch {
+  background-color: var(--bg-void);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      var(--grid-line) 39px,
+      var(--grid-line) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 39px,
+      var(--grid-line) 39px,
+      var(--grid-line) 40px
+    );
+}
+
+/* ============================================================
+   Keyframes
+   ============================================================ */
+
+/* Threat crossing — red ring emanating from cell */
+@keyframes ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* LIVE status indicator blink */
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
+/* ============================================================
+   Utility classes
+   ============================================================ */
+
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.font-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.font-data {
+  font-family: var(--font-data);
+  font-weight: 500;
+}
+
+/* Scrollbar suppression */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================
+   Reduced Motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

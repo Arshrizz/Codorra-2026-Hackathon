@@ -151,3 +151,22 @@ Frontend/.env
 *.local
 **/logs/
 **/.system_generated/
+
+# Node / Vite build artifacts
+Frontend/node_modules/
+Frontend/dist/
+
+# Agent tooling — not part of the project source
+.agent/
+.agents/
+
+# Project meta / prompt files — internal use only
+Antigravity_Prompt.md
+skills-lock.json
+
+# Spec / internal docs
+Frontend/Frontend.md
+/README.md
+
+# Frontend lockfile placeholder
+Frontend/.gitkeep
