@@ -173,14 +173,16 @@ export function useGridData() {
     const { supabase } = await import('../lib/supabase');
 
     const { data: rows } = await supabase
-      .from('grid_aggregates')
+      .from('grid_threats')
       .select('*');
 
     if (rows) {
       const gd = new Map();
       for (const row of rows) {
-        const level = getThreatLevel(row.signal_count ?? 0);
-        gd.set(row.grid_id, { ...row, threat_level: level });
+        // Map backend threat_score to frontend signal_count
+        const score = Math.round(row.threat_score ?? 0);
+        const level = getThreatLevel(score);
+        gd.set(row.grid_id, { ...row, signal_count: score, threat_level: level });
       }
       setGridData(gd);
       setEventLog(buildMockEventLog(gd));
@@ -191,11 +193,12 @@ export function useGridData() {
       .channel('grid-updates')
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'grid_aggregates' },
+        { event: '*', schema: 'public', table: 'grid_threats' },
         (payload) => {
           const row   = payload.new;
-          const level = getThreatLevel(row.signal_count ?? 0);
-          const rowWithLevel = { ...row, threat_level: level };
+          const score = Math.round(row.threat_score ?? 0);
+          const level = getThreatLevel(score);
+          const rowWithLevel = { ...row, signal_count: score, threat_level: level };
           setGridData((prev) => {
             const next = new Map(prev);
             next.set(row.grid_id, rowWithLevel);
