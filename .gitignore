@@ -37,10 +37,3 @@ Thumbs.db
 .mypy_cache/
 .coverage
 htmlcov/
-
-# Internal spec / prompt docs (not project source)
-Backend/Backend.md
-Frontend/Frontend.md
-Antigravity_Prompt.md
-UI_Upgrade_Spec.md
-Patch3_ExactCode.md
