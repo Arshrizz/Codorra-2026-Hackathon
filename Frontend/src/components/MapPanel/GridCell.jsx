@@ -97,6 +97,22 @@ const GridCell = memo(function GridCell({
         }}
       />
 
+      {(isThreat) && (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={Math.min(width, height) * 0.38}
+          fill="none"
+          stroke="var(--red-threat)"
+          strokeWidth={1.2}
+          style={{
+            animation: 'threat-ring 1.6s ease-out infinite',
+            transformOrigin: `${cx}px ${cy}px`,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+      
       {showRipple && (
         <circle
           cx={cx}
