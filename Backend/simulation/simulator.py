@@ -7,7 +7,7 @@ import httpx
 
 from simulation.privacy import laplace_noise
 
-TARGET_URL = "http://127.0.0.1:8000/api/v1/ingest"
+TARGET_URL = "https://codorra-2026-hackathon.onrender.com/api/v1/ingest"
 BATCH_SIZE = 50
 RPS = 200
 REPORT_INTERVAL_S = 5
